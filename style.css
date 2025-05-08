@@ -19,7 +19,7 @@ h1 {
 .b {
     display: inline-block;
     text-decoration: none;
-    text-align: center;
+    text-align: left;
     font-family: inherit;
     font-size: 1.2rem;
     padding: 10px 20px;
