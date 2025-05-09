@@ -114,7 +114,7 @@ section > div {
     gap: var(--spacing-unit);
 }
 
-section > div.buttons-vertical {
+section > div.vertical {
     flex-direction: column;
     align-items: flex-start;
 }
