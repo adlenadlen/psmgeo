@@ -13,6 +13,10 @@
         .controls-container {
             max-width: 900px;
             margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: #f9f9f9;
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -97,6 +101,7 @@
             color: var(--text-color);
             opacity: 0.8;
             font-family: var(--primary-font);
+            padding: 20px;
             text-align: left;
         }
 
@@ -211,6 +216,10 @@
         }
 
         @media (prefers-color-scheme: dark) {
+            .controls-container {
+                border-color: #444;
+                background-color: #2b2b2b;
+            }
             #search-input {
                 border-color: #555;
             }
