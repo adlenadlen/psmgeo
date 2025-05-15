@@ -6,19 +6,23 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>ГРО</title>
 	<meta name="description" content="Поиск по точкам Геодезической разбивочной основы (ГРО) для Иркутского завода полимеров.">
-	<link rel="stylesheet" href="/style.css">
+	<!-- <link rel="stylesheet" href="/style.css"> --> <!-- Assuming this path is correct for your setup -->
 	<link rel="icon" href="/favicon.png" type="image/png">
 	<style>
+		/* Paste the CSS you provided here */
+        :root{--primary-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Ubuntu","Helvetica Neue",Arial,sans-serif;--mono-font:"SF Mono","Monaco",Consolas,"Lucida Console","Roboto Mono","Droid Sans Mono","Ubuntu Mono","Liberation Mono","DejaVu Sans Mono","Courier New",monospace;--container-max-width:900px;--spacing-unit:10px;--background-color:#fff;--text-color:#000;--button-background-color:#eee;--button-hover-background-color:#f0f0f0}@media (prefers-color-scheme:dark){:root{--background-color:#1e1e1e;--text-color:#f5f5f5;--button-background-color:#333;--button-hover-background-color:#444}}*{margin:0;padding:0;box-sizing:border-box}html{font-size:16px}body{font-family:var(--primary-font);background:var(--background-color);color:var(--text-color);line-height:1.6;padding:var(--spacing-unit);transition:background-color .3s ease,color .3s ease}.page-container{max-width:var(--container-max-width);margin:calc(var(--spacing-unit)*2) auto;padding:0 calc(var(--spacing-unit)*2)}h1{font-size:2rem;margin-bottom:calc(var(--spacing-unit)*2)}.breadcrumbs{font-size:1.1rem;margin-bottom:calc(var(--spacing-unit)*1.5)}.breadcrumbs ol{list-style:none;padding-left:0;margin:0;display:flex;flex-wrap:wrap;align-items:center}.breadcrumbs li a{text-decoration:none;color:var(--text-color)}.breadcrumbs li a:hover{text-decoration:underline}.breadcrumbs li+li::before{content:'>';margin:0 calc(var(--spacing-unit)*.8);color:var(--text-color);opacity:.6}.breadcrumbs li.current{font-weight:400;color:var(--text-color);opacity:.7}.b{display:inline-block;text-decoration:none;text-align:left;font-family:inherit;font-size:1.2rem;padding:var(--spacing-unit) calc(var(--spacing-unit)*2);border-radius:20px;cursor:pointer;font-weight:600;border:0;color:var(--text-color);background-color:var(--button-background-color);transition:background-color .2s ease}.b:hover{background-color:var(--button-hover-background-color)}section{margin-bottom:calc(var(--spacing-unit)*1.5)}section>div{display:flex;flex-wrap:wrap;gap:var(--spacing-unit)}section>div.vertical{flex-direction:column;align-items:flex-start}section>h2{font-weight:500;margin-bottom:var(--spacing-unit);font-size:1.5rem}@media (max-width:425px){html{font-size:15px}:root{--spacing-unit:9px}}
+
+        /* Internal page styles - these were already in your original HTML */
 		.controls-container {
-			max-width: 900px;
-			margin: 20px 0;
-			padding: 15px;
+			max-width: 900px; /* var(--container-max-width) could be used if defined for this context */
+			margin: 20px 0; /* calc(var(--spacing-unit) * 2) 0; */
+			padding: 15px; /* calc(var(--spacing-unit) * 1.5); */
 			border: 1px solid #eee;
 			border-radius: 8px;
-			background-color: #f9f9f9;
+			background-color: #f9f9f9; /* Slightly different from body's --background-color for contrast */
 			display: flex;
 			flex-direction: column;
-			gap: 15px;
+			gap: 15px; /* calc(var(--spacing-unit) * 1.5); */
 			font-family: var(--primary-font);
 		}
 
@@ -26,39 +30,49 @@
 			display: flex;
 			align-items: center;
 			flex-wrap: wrap;
-			gap: 10px;
+			gap: 10px; /* var(--spacing-unit); */
 			width: 100%;
 		}
+        .input-control-row { /* Specific for rows with input fields and labels */
+            gap: 5px; /* calc(var(--spacing-unit) / 2); Smaller gap for tighter input-label pairing */
+        }
 
 		.control-label {
 			font-size: .95em;
 			color: var(--text-color);
-			margin-right: 5px;
+			margin-right: 5px; /* calc(var(--spacing-unit) / 2); */
 			white-space: nowrap;
 		}
 
-		#search-input {
-			padding: 10px 12px;
+		#search-input,
+        .manual-coord-input {
+			padding: 10px 12px; /* var(--spacing-unit) calc(var(--spacing-unit) * 1.2); */
 			border: 1px solid #ccc;
 			border-radius: 4px;
 			font-size: 1em;
 			font-family: var(--primary-font);
-			min-width: 250px;
 			box-sizing: border-box;
 			text-align: left;
 			background-color: var(--background-color);
 			color: var(--text-color);
 		}
+        #search-input {
+            min-width: 250px;
+        }
+        .manual-coord-input {
+            width: 180px; /* Increased width slightly */
+        }
+
 
 		.coord-toggle,
 		.search-mode-toggle,
 		.note-toggle,
 		.ignore-chars-toggle {
-			padding: 5px;
+			padding: 5px; /* calc(var(--spacing-unit) / 2); */
 			border: 1px solid #ccc;
 			border-radius: 20px;
 			display: inline-flex;
-			background-color: #eee;
+			background-color: #eee; /* var(--button-background-color) but slightly lighter shade for toggle base */
 		}
 
 		.coord-toggle input[type="radio"],
@@ -73,11 +87,11 @@
 		.note-toggle label,
 		.ignore-chars-toggle label {
 			display: inline-block;
-			padding: 8px 15px;
+			padding: 8px 15px; /* calc(var(--spacing-unit)*.8) calc(var(--spacing-unit)*1.5); */
 			cursor: pointer;
 			border-radius: 18px;
 			transition: background-color .3s ease, color .3s ease;
-			color: #555;
+			color: #555; /* A bit darker than --text-color for unselected state */
 			font-family: var(--primary-font);
 			font-size: .9em;
 			white-space: nowrap;
@@ -87,20 +101,20 @@
 		.search-mode-toggle input[type="radio"]:checked+label,
 		.note-toggle input[type="radio"]:checked+label,
 		.ignore-chars-toggle input[type="radio"]:checked+label {
-			background-color: #007bff;
+			background-color: #007bff; /* A primary action color */
 			color: #fff;
 		}
 
 		#airtable-data-container {
-			max-width: 900px;
-			margin: 20px 0;
+			max-width: 900px; /* var(--container-max-width); */
+			margin: 20px 0; /* calc(var(--spacing-unit) * 2) 0; */
 		}
 
 		#airtable-message-state {
 			color: var(--text-color);
 			opacity: 0.8;
 			font-family: var(--primary-font);
-			padding: 20px;
+			padding: 20px; /* calc(var(--spacing-unit) * 2); */
 			text-align: left;
 		}
 
@@ -108,7 +122,7 @@
 			color: #d8000c;
 			background-color: #ffd2d2;
 			border: 1px solid #d8000c;
-			padding: 10px;
+			padding: 10px; /* var(--spacing-unit); */
 			border-radius: 5px;
 			display: inline-block;
 			text-align: left;
@@ -116,12 +130,12 @@
 		}
 
 		#output-list {
-			font-family: monospace, var(--primary-font);
+			font-family: var(--mono-font), var(--primary-font); /* Prioritize mono font */
 			text-align: left;
-			background-color: #fdfdfd;
+			background-color: #fdfdfd; /* Slightly off-white */
 			border: 1px solid #eee;
-			padding: 20px;
-			margin-top: 15px;
+			padding: 20px; /* calc(var(--spacing-unit) * 2); */
+			margin-top: 15px; /* calc(var(--spacing-unit) * 1.5); */
 			border-radius: 5px;
 			line-height: 1.6;
 			overflow-x: auto;
@@ -137,120 +151,75 @@
 		.point-link {
 			cursor: pointer;
 			text-decoration: underline;
-			color: #007bff;
+			color: #007bff; /* Primary link color */
 			font-weight: bold;
 		}
 
 		.point-link:hover {
-			color: #0056b3;
+			color: #0056b3; /* Darker shade for hover */
 		}
 
 		.popup-overlay {
-			position: fixed;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
+			position: fixed; top: 0; left: 0; width: 100%; height: 100%;
 			background-color: rgba(0, 0, 0, 0.6);
-			display: none;
-			justify-content: center;
-			align-items: center;
+			display: none; justify-content: center; align-items: center;
 			z-index: 1000;
 		}
 
 		.popup-content {
 			background-color: var(--background-color);
-			padding: 30px;
+			padding: 30px; /* calc(var(--spacing-unit) * 3); */
 			border-radius: 8px;
 			max-width: 800px;
 			max-height: 80vh;
-			overflow-y: auto;
-			position: relative;
-			font-family: monospace, var(--primary-font);
+			overflow-y: auto; position: relative;
+			font-family: var(--mono-font), var(--primary-font);
 			text-align: left;
 			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 			color: var(--text-color);
 		}
 
 		.popup-close-btn {
-			position: absolute;
-			top: 10px;
-			right: 15px;
-			font-size: 24px;
-			cursor: pointer;
-			background: none;
-			border: none;
-			color: var(--text-color);
-			opacity: 0.7;
+			position: absolute; top: 10px; right: 15px; /* var(--spacing-unit), calc(var(--spacing-unit) * 1.5) */
+			font-size: 24px; cursor: pointer;
+			background: none; border: none;
+			color: var(--text-color); opacity: 0.7;
 		}
+		.popup-close-btn:hover { opacity: 1; }
 
-		.popup-close-btn:hover {
-			opacity: 1;
-		}
-
-		#nearby-list {
-			margin-top: 15px;
-			line-height: 1.7;
-		}
-
-		#nearby-list .nearby-item {
-			margin-bottom: 5px;
-		}
-
+		#nearby-list { margin-top: 15px; line-height: 1.7; } /* calc(var(--spacing-unit) * 1.5); */
+		#nearby-list .nearby-item { margin-bottom: 5px; } /* calc(var(--spacing-unit) / 2); */
 		#nearby-list .nearby-distance {
-			font-weight: bold;
-			color: var(--text-color);
-			opacity: 0.9;
-			display: inline-block;
-			min-width: 60px;
-			text-align: right;
-			margin-right: 10px;
+			font-weight: bold; color: var(--text-color); opacity: 0.9;
+			display: inline-block; min-width: 60px; text-align: right;
+			margin-right: 10px; /* var(--spacing-unit); */
+		}
+		#nearby-list .reference-point {
+			font-weight: bold; margin-bottom: 10px; /* var(--spacing-unit); */
+			border-bottom: 1px solid #ccc; padding-bottom: 5px; /* calc(var(--spacing-unit) / 2); */
 		}
 
-		#nearby-list .reference-point {
-			font-weight: bold;
-			margin-bottom: 10px;
-			border-bottom: 1px solid #ccc;
-			padding-bottom: 5px;
-		}
+        #manual-conversion-result-x,
+        #manual-conversion-result-y {
+            font-weight: bold;
+            margin-left: 5px; /* calc(var(--spacing-unit) / 2); */
+            min-width: 120px;
+            display: inline-block;
+            font-family: var(--mono-font), var(--primary-font);
+        }
 
 		@media (prefers-color-scheme: dark) {
-			.controls-container {
-				border-color: #444;
-				background-color: #2b2b2b;
+			.controls-container { border-color: #444; background-color: #2b2b2b; }
+			#search-input, .manual-coord-input { border-color: #555; /* No change, already covered */ }
+			.coord-toggle, .search-mode-toggle, .note-toggle, .ignore-chars-toggle {
+				border-color: #555; background-color: #3a3a3a;
 			}
-
-			#search-input {
-				border-color: #555;
-			}
-
-			.coord-toggle,
-			.search-mode-toggle,
-			.note-toggle,
-			.ignore-chars-toggle {
-				border-color: #555;
-				background-color: #3a3a3a;
-			}
-
-			.coord-toggle label,
-			.search-mode-toggle label,
-			.note-toggle label,
-			.ignore-chars-toggle label {
+			.coord-toggle label, .search-mode-toggle label, .note-toggle label, .ignore-chars-toggle label {
 				color: #ccc;
 			}
-
-			#output-list {
-				background-color: #252525;
-				border-color: #444;
-			}
-
-			.output-line {
-				border-bottom-color: #444;
-			}
-
-			#nearby-list .reference-point {
-				border-bottom-color: #555;
-			}
+			#output-list { background-color: #252525; border-color: #444; }
+			.output-line { border-bottom-color: #444; }
+			#nearby-list .reference-point { border-bottom-color: #555; }
 		}
 	</style>
 </head>
@@ -269,7 +238,7 @@
 
 		<div class="controls-container">
 			<div class="control-row">
-				<span class="control-label">Система координат:</span>
+				<span class="control-label">Система координат (отображение):</span>
 				<div class="coord-toggle">
 					<input type="radio" id="toggle-izp" name="coord-system" value="izp" checked>
 					<label for="toggle-izp">ИЗП</label>
@@ -323,13 +292,57 @@
 				<div id="nearby-list"></div>
 			</div>
 		</div>
-		<section>
+		
+        <section>
 			<h2>Работа с данными</h2>
 			<div>
 				<a href="https://docs.google.com/spreadsheets/d/18wTwF7jmr3uSAP8ak1PrI6lTlzzrkZwjhXwf2Mmr41Y/edit?usp=sharing" class="b">Просмотр таблицы</a>
 				<a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTa3l-bUfZwy3iCNzVKmawZ_dApKSqMm6yuddAzP3eIkLp5m7zuHydF2UdSkUxKwW0CntEv6EBCxFf7/pub?gid=1125461087&single=true&output=csv" class="b">Скачать CSV</a>
 			</div>
 		</section>
+
+        <section>
+            <h2>Перевод координат</h2>
+            <div class="controls-container">
+                <div class="control-row">
+                    <span class="control-label">Исходная система:</span>
+                    <div class="coord-toggle">
+                        <input type="radio" id="manual-source-izp" name="manual-source-system" value="izp" checked>
+                        <label for="manual-source-izp">ИЗП</label>
+                        <input type="radio" id="manual-source-msk" name="manual-source-system" value="msk">
+                        <label for="manual-source-msk">МСК</label>
+                        <input type="radio" id="manual-source-gfu" name="manual-source-system" value="gfu">
+                        <label for="manual-source-gfu">ГФУ</label>
+                    </div>
+                </div>
+                <div class="control-row input-control-row">
+                    <label for="manual-coord-x" class="control-label">X (Север):</label>
+                    <input type="text" id="manual-coord-x" class="manual-coord-input" placeholder="Введите X" inputmode="decimal">
+                </div>
+                <div class="control-row input-control-row">
+                    <label for="manual-coord-y" class="control-label">Y (Восток):</label>
+                    <input type="text" id="manual-coord-y" class="manual-coord-input" placeholder="Введите Y" inputmode="decimal">
+                </div>
+                <div class="control-row">
+                    <span class="control-label">Целевая система:</span>
+                    <div class="coord-toggle">
+                        <input type="radio" id="manual-target-izp" name="manual-target-system" value="izp">
+                        <label for="manual-target-izp">ИЗП</label>
+                        <input type="radio" id="manual-target-msk" name="manual-target-system" value="msk" checked>
+                        <label for="manual-target-msk">МСК</label>
+                        <input type="radio" id="manual-target-gfu" name="manual-target-system" value="gfu">
+                        <label for="manual-target-gfu">ГФУ</label>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <span class="control-label">Результат:</span>
+                    <div>
+                        X: <span id="manual-conversion-result-x">---</span>
+                        Y: <span id="manual-conversion-result-y">---</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 	</div>
 
 	<script>
@@ -338,48 +351,39 @@
 		const BASE_X_FIELD_NAME = 'Xraw';
 		const BASE_Y_FIELD_NAME = 'Yraw';
 		const COL_INDEX = {
-			CoordSystem: 0,
-			Point: 1,
-			Xraw: 2,
-			Yraw: 3,
-			H: 4,
-			Info: 5
+			CoordSystem: 0, Point: 1, Xraw: 2, Yraw: 3, H: 4, Info: 5
 		};
 		const DEBOUNCE_DELAY = 400;
 		const MAX_NEARBY_DISTANCE = 300;
 
-		// --- Параметры для преобразования ИЗП (Стройсетка/SS) ---
-		const X0_SS_IN_MSK = 6305600;
-		const Y0_SS_IN_MSK = 557800;
-		const K1_SS = 0.8048621495;
-		const K2_SS = 0.5934618103;
+		const X0_SS_IN_MSK = 6305600; const Y0_SS_IN_MSK = 557800;
+		const K1_SS = 0.8048621495; const K2_SS = 0.5934618103;
+		const X0_GFU_IN_MSK = 6301571.65; const Y0_GFU_IN_MSK = 561132.43;
+		const K1_GFU = 0.4303677383; const K2_GFU = 0.90265363489;
 
-		// --- Параметры для преобразования ГФУ (GFU) ---
-		const X0_GFU_IN_MSK = 6301571.65;
-		const Y0_GFU_IN_MSK = 561132.43;
-		const K1_GFU = 0.4303677383;
-		const K2_GFU = 0.90265363489;
-
-		// --- Глобальные переменные ---
 		let fullDatabaseCache = [];
 		let currentDisplayRecords = [];
-		let currentCoordMode = 'izp'; // 'izp', 'msk', or 'gfu'
+		let currentCoordMode = 'izp'; // For search results display
 		let isNoteVisible = true;
 		let shouldIgnoreChars = false;
 		let debounceTimer;
 		let isLoading = false;
 
-		// --- Элементы DOM ---
+		// DOM Elements (Search related)
 		const outputContainer = document.getElementById('output-list');
 		const messageState = document.getElementById('airtable-message-state');
-		const coordToggleButtons = document.querySelectorAll('.coord-toggle input[name="coord-system"]');
+		const searchCoordToggleButtons = document.querySelectorAll('input[name="coord-system"]'); // For search display
 		const searchInput = document.getElementById('search-input');
-		// ... (other DOM elements) ...
 		const nearbyPopup = document.getElementById('nearby-popup');
 		const nearbyListContainer = document.getElementById('nearby-list');
+        let closePopupButton; // Defined in DOMContentLoaded
+
+		// DOM Elements (Manual Conversion related)
+		let manualSourceSystemRadios, manualTargetSystemRadios;
+        let manualCoordXInput, manualCoordYInput;
+        let manualResultXSpan, manualResultYSpan;
 
 
-		// --- Вспомогательные функции ---
 		function formatCoordinate(value) {
 			if (value === null || typeof value === 'undefined' || isNaN(value)) {
 				return 'N/A';
@@ -392,31 +396,28 @@
 			return str.toLowerCase().replace(/[\._,\-]/g, '');
 		}
 
-		// --- Общие функции преобразования координат ---
+		// --- Coordinate Conversion Functions ---
 		function convertMskToLocalX(xMsk, yMsk, X0_Local_IN_MSK, Y0_Local_IN_MSK, K1_Local, K2_Local) {
 			if (isNaN(xMsk) || isNaN(yMsk)) return NaN;
 			return (xMsk - X0_Local_IN_MSK) * K1_Local + (yMsk - Y0_Local_IN_MSK) * K2_Local;
 		}
-
 		function convertMskToLocalY(xMsk, yMsk, X0_Local_IN_MSK, Y0_Local_IN_MSK, K1_Local, K2_Local) {
 			if (isNaN(xMsk) || isNaN(yMsk)) return NaN;
 			return (yMsk - Y0_Local_IN_MSK) * K1_Local - (xMsk - X0_Local_IN_MSK) * K2_Local;
 		}
-
 		function convertLocalToMskX(xLocal, yLocal, X0_Local_IN_MSK, Y0_Local_IN_MSK, K1_Local, K2_Local) {
 			if (isNaN(xLocal) || isNaN(yLocal)) return NaN;
 			return X0_Local_IN_MSK + xLocal * K1_Local - yLocal * K2_Local;
 		}
-
 		function convertLocalToMskY(xLocal, yLocal, X0_Local_IN_MSK, Y0_Local_IN_MSK, K1_Local, K2_Local) {
 			if (isNaN(xLocal) || isNaN(yLocal)) return NaN;
 			return Y0_Local_IN_MSK + xLocal * K2_Local + yLocal * K1_Local;
 		}
 
-		// --- Парсер CSV ---
+		// --- CSV Parsing ---
 		function parseCSV(csvText) {
 			const lines = csvText.trim().split('\n');
-			const records = lines.map((line, index) => {
+			return lines.map((line, index) => {
 				const cleanedLine = line.trim();
 				if (!cleanedLine) return null;
 				const parts = cleanedLine.split(',');
@@ -424,7 +425,7 @@
 					return {
 						id: `gs_${index + 1}`,
 						fields: {
-							CoordSystem: parts[COL_INDEX.CoordSystem]?.trim().toUpperCase() || 'UNKNOWN', // Default to UNKNOWN
+							CoordSystem: parts[COL_INDEX.CoordSystem]?.trim().toUpperCase() || 'UNKNOWN',
 							Point: parts[COL_INDEX.Point]?.trim() || '',
 							[BASE_X_FIELD_NAME]: parts[COL_INDEX.Xraw]?.trim() || '',
 							[BASE_Y_FIELD_NAME]: parts[COL_INDEX.Yraw]?.trim() || '',
@@ -432,126 +433,123 @@
 							Info: parts[COL_INDEX.Info]?.trim() || ''
 						}
 					};
-				} else {
-					console.warn(`Skipping malformed CSV line ${index + 1}: ${line}`);
-					return null;
 				}
+				console.warn(`Skipping malformed CSV line ${index + 1}: ${line}`);
+				return null;
 			}).filter(record => record !== null);
-			return records;
 		}
 
-		// --- Helper function to get coordinates in the target display mode ---
-		function getCoordsInTargetMode(recordFields, targetMode_lowercase) {
+        // --- Universal Coordinate Transformation (used by both search display and manual conversion) ---
+        function transformCoordinates(inputX, inputY, sourceSystemLowercase, targetSystemLowercase) {
+            if (isNaN(inputX) || isNaN(inputY)) {
+                return { x: NaN, y: NaN };
+            }
+            if (sourceSystemLowercase === targetSystemLowercase) {
+                return { x: inputX, y: inputY };
+            }
+
+            let xMsk, yMsk;
+            // Convert source to MSK
+            switch (sourceSystemLowercase) {
+                case 'msk': xMsk = inputX; yMsk = inputY; break;
+                case 'izp':
+                    xMsk = convertLocalToMskX(inputX, inputY, X0_SS_IN_MSK, Y0_SS_IN_MSK, K1_SS, K2_SS);
+                    yMsk = convertLocalToMskY(inputX, inputY, X0_SS_IN_MSK, Y0_SS_IN_MSK, K1_SS, K2_SS);
+                    break;
+                case 'gfu':
+                    xMsk = convertLocalToMskX(inputX, inputY, X0_GFU_IN_MSK, Y0_GFU_IN_MSK, K1_GFU, K2_GFU);
+                    yMsk = convertLocalToMskY(inputX, inputY, X0_GFU_IN_MSK, Y0_GFU_IN_MSK, K1_GFU, K2_GFU);
+                    break;
+                default: console.warn(`Transform: Unknown source system '${sourceSystemLowercase}'`); return { x: NaN, y: NaN };
+            }
+
+            if (isNaN(xMsk) || isNaN(yMsk)) {
+                return { x: NaN, y: NaN };
+            }
+
+            // Convert MSK to target
+            switch (targetSystemLowercase) {
+                case 'msk': return { x: xMsk, y: yMsk };
+                case 'izp':
+                    return {
+                        x: convertMskToLocalX(xMsk, yMsk, X0_SS_IN_MSK, Y0_SS_IN_MSK, K1_SS, K2_SS),
+                        y: convertMskToLocalY(xMsk, yMsk, X0_SS_IN_MSK, Y0_SS_IN_MSK, K1_SS, K2_SS)
+                    };
+                case 'gfu':
+                    return {
+                        x: convertMskToLocalX(xMsk, yMsk, X0_GFU_IN_MSK, Y0_GFU_IN_MSK, K1_GFU, K2_GFU),
+                        y: convertMskToLocalY(xMsk, yMsk, X0_GFU_IN_MSK, Y0_GFU_IN_MSK, K1_GFU, K2_GFU)
+                    };
+                default: console.warn(`Transform: Unknown target system '${targetSystemLowercase}'`); return { x: NaN, y: NaN };
+            }
+        }
+
+
+		// --- For Search Results Display ---
+		function getCoordsInTargetMode(recordFields, targetModeLowercase) {
 			const xBaseRaw = recordFields[BASE_X_FIELD_NAME];
 			const yBaseRaw = recordFields[BASE_Y_FIELD_NAME];
-			// sourceSystemFromCSV is already uppercase from parseCSV (e.g., "IZP", "MSK", "GFU")
-			const sourceSystemFromCSV_uppercase = recordFields['CoordSystem'];
-
+			const sourceSystemUppercase = recordFields['CoordSystem']; // From CSV, e.g. "IZP"
 			const xBase = parseFloat(xBaseRaw);
 			const yBase = parseFloat(yBaseRaw);
-
-			if (isNaN(xBase) || isNaN(yBase)) {
-				console.warn(`Invalid base coordinates for point ${recordFields['Point']}: X='${xBaseRaw}', Y='${yBaseRaw}'`);
-				return { x: NaN, y: NaN };
-			}
-
-			// If source system from CSV matches the target display mode, no conversion needed.
-			if (sourceSystemFromCSV_uppercase === targetMode_lowercase.toUpperCase()) {
-				return { x: xBase, y: yBase };
-			}
-
-			let xMsk, yMsk; // Intermediate MSK coordinates
-
-			// Step 1: Convert source coordinates (xBase, yBase) to MSK
-			//         (unless source is already MSK and target is not MSK)
-			switch (sourceSystemFromCSV_uppercase) {
-				case 'MSK':
-					xMsk = xBase;
-					yMsk = yBase;
-					break;
-				case 'IZP': // IZP (StroySetka/SS) to MSK
-					xMsk = convertLocalToMskX(xBase, yBase, X0_SS_IN_MSK, Y0_SS_IN_MSK, K1_SS, K2_SS);
-					yMsk = convertLocalToMskY(xBase, yBase, X0_SS_IN_MSK, Y0_SS_IN_MSK, K1_SS, K2_SS);
-					break;
-				case 'GFU': // GFU to MSK
-					xMsk = convertLocalToMskX(xBase, yBase, X0_GFU_IN_MSK, Y0_GFU_IN_MSK, K1_GFU, K2_GFU);
-					yMsk = convertLocalToMskY(xBase, yBase, X0_GFU_IN_MSK, Y0_GFU_IN_MSK, K1_GFU, K2_GFU);
-					break;
-				default:
-					console.warn(`Unknown source coordinate system '${sourceSystemFromCSV_uppercase}' for point ${recordFields['Point']}`);
-					return { x: NaN, y: NaN };
-			}
-
-			if (isNaN(xMsk) || isNaN(yMsk)) {
-				console.warn(`Conversion to MSK failed for point ${recordFields['Point']} from source ${sourceSystemFromCSV_uppercase}`);
-				return { x: NaN, y: NaN };
-			}
-
-			// Step 2: Convert from MSK to the targetMode (if target is not MSK itself)
-			//         The case where targetMode is MSK is already handled if source was MSK (by the first if condition)
-			//         or if source was not MSK, then xMsk, yMsk are the correct values.
-			switch (targetMode_lowercase) {
-				case 'msk':
-					return { x: xMsk, y: yMsk };
-				case 'izp': // MSK to IZP (StroySetka/SS)
-					const xIzp = convertMskToLocalX(xMsk, yMsk, X0_SS_IN_MSK, Y0_SS_IN_MSK, K1_SS, K2_SS);
-					const yIzp = convertMskToLocalY(xMsk, yMsk, X0_SS_IN_MSK, Y0_SS_IN_MSK, K1_SS, K2_SS);
-					return { x: xIzp, y: yIzp };
-				case 'gfu': // MSK to GFU
-					const xGfu = convertMskToLocalX(xMsk, yMsk, X0_GFU_IN_MSK, Y0_GFU_IN_MSK, K1_GFU, K2_GFU);
-					const yGfu = convertMskToLocalY(xMsk, yMsk, X0_GFU_IN_MSK, Y0_GFU_IN_MSK, K1_GFU, K2_GFU);
-					return { x: xGfu, y: yGfu };
-				default:
-					console.warn(`Unknown target coordinate mode: '${targetMode_lowercase}'`);
-					return { x: NaN, y: NaN };
-			}
+            
+            return transformCoordinates(xBase, yBase, sourceSystemUppercase.toLowerCase(), targetModeLowercase);
 		}
+        
+        // --- For Manual Conversion Section ---
+        function updateManualConversion() {
+            if (!manualCoordXInput || !manualCoordYInput || !manualResultXSpan || !manualResultYSpan) {
+                return; 
+            }
+            const sourceSystem = document.querySelector('input[name="manual-source-system"]:checked').value; 
+            const targetSystem = document.querySelector('input[name="manual-target-system"]:checked').value; 
+            const inputXValue = manualCoordXInput.value.trim().replace(',', '.'); // Allow comma as decimal
+            const inputYValue = manualCoordYInput.value.trim().replace(',', '.'); // Allow comma as decimal
+            
+            if (inputXValue === '' || inputYValue === '') {
+                 manualResultXSpan.textContent = '---';
+                 manualResultYSpan.textContent = '---';
+                 return;
+            }
+
+            const inputX = parseFloat(inputXValue);
+            const inputY = parseFloat(inputYValue);
+            
+            const result = transformCoordinates(inputX, inputY, sourceSystem, targetSystem);
+            
+            manualResultXSpan.textContent = formatCoordinate(result.x);
+            manualResultYSpan.textContent = formatCoordinate(result.y);
+        }
 
 
-		// --- Функция для отображения данных ---
+		// --- Display Search Results ---
 		function displayRecords(records) {
 			outputContainer.innerHTML = '';
 			if (isLoading) {
-				messageState.textContent = 'Загрузка данных...';
-				messageState.style.display = 'block';
-				messageState.classList.remove('error');
-				outputContainer.style.display = 'none';
-				return;
-			}
+                messageState.textContent = 'Загрузка данных...';
+                messageState.style.display = 'block'; outputContainer.style.display = 'none'; messageState.classList.remove('error');
+                return;
+            }
 			if (records.length === 0) {
-				if (fullDatabaseCache.length === 0) {
-					messageState.textContent = 'Ошибка загрузки базы или база пуста.';
-				} else if (searchInput.value.trim() === '') {
-					messageState.textContent = `Список загружен. Введите запрос для поиска...`;
-				} else {
-					messageState.textContent = 'Ничего не найдено по вашему запросу.';
-				}
-				messageState.style.display = 'block';
-				messageState.classList.remove('error');
-				outputContainer.style.display = 'none';
-				return;
-			}
-			messageState.style.display = 'none';
-			outputContainer.style.display = 'block';
-			const fragment = document.createDocumentFragment();
-
+                if (fullDatabaseCache.length === 0) messageState.textContent = 'Ошибка загрузки или база пуста.';
+                else if (searchInput.value.trim() === '') messageState.textContent = `Список загружен. Введите запрос для поиска...`;
+                else messageState.textContent = 'Ничего не найдено по вашему запросу.';
+                messageState.style.display = 'block'; outputContainer.style.display = 'none'; messageState.classList.remove('error');
+                return;
+            }
+			messageState.style.display = 'none'; outputContainer.style.display = 'block';
+			
+            const fragment = document.createDocumentFragment();
 			records.forEach(record => {
 				const point = record.fields['Point'] || 'N/A';
 				const info = record.fields['Info'] || 'N/A';
 				const h = record.fields['H'] || 'N/A';
-
-				// currentCoordMode is already lowercase e.g. 'izp', 'msk', 'gfu'
-				const targetCoords = getCoordsInTargetMode(record.fields, currentCoordMode);
-
+				const targetCoords = getCoordsInTargetMode(record.fields, currentCoordMode); 
 				const formattedX = formatCoordinate(targetCoords.x);
 				const formattedY = formatCoordinate(targetCoords.y);
-				const formattedH = formatCoordinate(h); // H is assumed to be absolute and not transformed
-
+				const formattedH = formatCoordinate(h);
 				let outputStringPart = `,${formattedX},${formattedY},${formattedH},`;
-				if (isNoteVisible) {
-					outputStringPart += info;
-				}
-
+				if (isNoteVisible) { outputStringPart += info; }
 				const lineDiv = document.createElement('div');
 				lineDiv.className = 'output-line';
 				const pointLink = document.createElement('a');
@@ -566,222 +564,161 @@
 			outputContainer.appendChild(fragment);
 		}
 
-		// --- Функция для КЛИЕНТСКОГО поиска в кэше ---
+		// --- Client-side Search ---
 		function performSearch() {
-			if (isLoading) return;
+            if (isLoading) return;
 			const searchTerm = searchInput.value.trim();
 			const searchModeToggle = document.querySelector('.search-mode-toggle input[name="search-mode"]:checked');
 			const ignoreCharsToggle = document.querySelector('.ignore-chars-toggle input[name="ignore-mode"]:checked');
-
 			shouldIgnoreChars = ignoreCharsToggle ? ignoreCharsToggle.value === 'on' : false;
 			const searchMode = searchModeToggle ? searchModeToggle.value : 'contains';
 
-
-			if (!searchTerm) {
-				currentDisplayRecords = [];
-				displayRecords(currentDisplayRecords);
-				return;
-			}
-			messageState.textContent = 'Поиск в кэше...';
-			messageState.style.display = 'block';
-			messageState.classList.remove('error');
-			outputContainer.style.display = 'none';
+			if (!searchTerm) { currentDisplayRecords = []; displayRecords(currentDisplayRecords); return; }
+			
+            messageState.textContent = 'Поиск в кэше...'; 
+            messageState.style.display = 'block'; outputContainer.style.display = 'none'; messageState.classList.remove('error');
 
 			const queryForComparison = shouldIgnoreChars ? normalizePointValue(searchTerm) : searchTerm.toLowerCase();
-			const filteredRecords = fullDatabaseCache.filter(record => {
+			currentDisplayRecords = fullDatabaseCache.filter(record => {
 				const rawFieldValue = record.fields['Point'];
 				if (!rawFieldValue) return false;
 				const fieldValueForComparison = shouldIgnoreChars ? normalizePointValue(rawFieldValue) : rawFieldValue.toLowerCase();
-				if (searchMode === 'exact') {
-					return fieldValueForComparison === queryForComparison;
-				} else { // contains
-					return String(fieldValueForComparison).includes(String(queryForComparison));
-				}
+				return searchMode === 'exact' ? fieldValueForComparison === queryForComparison : String(fieldValueForComparison).includes(String(queryForComparison));
 			});
-			currentDisplayRecords = filteredRecords;
 			displayRecords(currentDisplayRecords);
 		}
 
-		// --- Функция расчета расстояний и показа Pop-up ---
+		// --- Nearby Points Popup ---
 		function findAndShowNearby(clickedRecordId) {
-			const referencePoint = fullDatabaseCache.find(r => r.id === clickedRecordId);
-			if (!referencePoint) {
-				console.error("Reference point not found in cache:", clickedRecordId);
+            const referencePoint = fullDatabaseCache.find(r => r.id === clickedRecordId);
+			if (!referencePoint) { console.error("Ref point not found:", clickedRecordId); return; }
+			
+            const refCoords = getCoordsInTargetMode(referencePoint.fields, currentCoordMode); 
+			if (isNaN(refCoords.x) || isNaN(refCoords.y)) {
+                alert(`Невозможно рассчитать расстояние: у точки (${referencePoint.fields['Point']}) некорректные координаты для режима ${currentCoordMode}. Исходная: ${referencePoint.fields['CoordSystem']}`);
 				return;
-			}
+            }
+            const refX = refCoords.x; const refY = refCoords.y;
 
-			// currentCoordMode is lowercase
-			const refCoords = getCoordsInTargetMode(referencePoint.fields, currentCoordMode);
-			const refX = refCoords.x;
-			const refY = refCoords.y;
+            const nearbyPoints = [];
+            fullDatabaseCache.forEach(candidateRecord => {
+                if (candidateRecord.id === clickedRecordId) return;
+                const candCoords = getCoordsInTargetMode(candidateRecord.fields, currentCoordMode);
+                if (isNaN(candCoords.x) || isNaN(candCoords.y)) return;
+                const deltaX = candCoords.x - refX; const deltaY = candCoords.y - refY;
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                if (distance <= MAX_NEARBY_DISTANCE) {
+                    nearbyPoints.push({ record: candidateRecord, distance: distance, calculatedX: candCoords.x, calculatedY: candCoords.y });
+                }
+            });
+            nearbyPoints.sort((a, b) => a.distance - b.distance);
+            
+            nearbyListContainer.innerHTML = '';
+            const refPointData = referencePoint.fields;
+            let refOutputString = `${refPointData['Point']||'N/A'},${formatCoordinate(refX)},${formatCoordinate(refY)},${formatCoordinate(refPointData['H'])},`;
+            if(isNoteVisible) refOutputString += (refPointData['Info']||'N/A');
+            const refElement = document.createElement('div');
+            refElement.className = 'reference-point';
+            refElement.innerHTML = `<strong>Исходная:</strong> ${refOutputString}`;
+            nearbyListContainer.appendChild(refElement);
 
-			if (isNaN(refX) || isNaN(refY)) {
-				alert(`Невозможно рассчитать расстояние: у выбранной точки (${referencePoint.fields['Point']}) некорректные или неизвестные базовые координаты для текущего режима отображения (${currentCoordMode}). Исходная система: ${referencePoint.fields['CoordSystem']}`);
-				return;
-			}
-
-			const nearbyPoints = [];
-			fullDatabaseCache.forEach(candidateRecord => {
-				if (candidateRecord.id === clickedRecordId) return;
-
-				const candCoords = getCoordsInTargetMode(candidateRecord.fields, currentCoordMode);
-				const candX = candCoords.x;
-				const candY = candCoords.y;
-
-				if (isNaN(candX) || isNaN(candY)) return;
-
-				const deltaX = candX - refX;
-				const deltaY = candY - refY;
-				const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-				if (distance <= MAX_NEARBY_DISTANCE) {
-					nearbyPoints.push({
-						record: candidateRecord,
-						distance: distance,
-						calculatedX: candX,
-						calculatedY: candY
-					});
-				}
-			});
-
-			nearbyPoints.sort((a, b) => a.distance - b.distance);
-			nearbyListContainer.innerHTML = '';
-
-			const refPointData = referencePoint.fields;
-			const refFormattedX = formatCoordinate(refX);
-			const refFormattedY = formatCoordinate(refY);
-			const refFormattedH = formatCoordinate(refPointData['H']);
-			let refOutputString = `${refPointData['Point'] || 'N/A'},${refFormattedX},${refFormattedY},${refFormattedH},`;
-			if (isNoteVisible) {
-				refOutputString += (refPointData['Info'] || 'N/A');
-			}
-			const refElement = document.createElement('div');
-			refElement.className = 'reference-point';
-			refElement.innerHTML = `<strong>Исходная:</strong> ${refOutputString}`;
-			nearbyListContainer.appendChild(refElement);
-
-			if (nearbyPoints.length > 0) {
-				nearbyPoints.forEach(item => {
-					const recordData = item.record.fields;
-					const point = recordData['Point'] || 'N/A';
-					const info = recordData['Info'] || 'N/A';
-					const formattedX = formatCoordinate(item.calculatedX);
-					const formattedY = formatCoordinate(item.calculatedY);
-					const formattedH = formatCoordinate(recordData['H']);
-					let outputString = `${point},${formattedX},${formattedY},${formattedH},`;
-					if (isNoteVisible) {
-						outputString += info;
-					}
-					const listItem = document.createElement('div');
-					listItem.className = 'nearby-item';
-					listItem.innerHTML = `<span class="nearby-distance">(${item.distance.toFixed(1)})</span> ${outputString}`;
-					nearbyListContainer.appendChild(listItem);
-				});
-			} else {
-				const noNearbyDiv = document.createElement('div');
+            if (nearbyPoints.length > 0) {
+                nearbyPoints.forEach(item => {
+                    const rd = item.record.fields;
+                    let outStr = `${rd['Point']||'N/A'},${formatCoordinate(item.calculatedX)},${formatCoordinate(item.calculatedY)},${formatCoordinate(rd['H'])},`;
+                    if(isNoteVisible) outStr += (rd['Info']||'N/A');
+                    const li = document.createElement('div');
+                    li.className = 'nearby-item';
+                    li.innerHTML = `<span class="nearby-distance">(${item.distance.toFixed(1)})</span> ${outStr}`;
+                    nearbyListContainer.appendChild(li);
+                });
+            } else {
+                const noNearbyDiv = document.createElement('div');
 				noNearbyDiv.textContent = 'Ближайшие точки (до 300м) не найдены.';
 				nearbyListContainer.appendChild(noNearbyDiv);
-			}
-			nearbyPopup.style.display = 'flex';
+            }
+            nearbyPopup.style.display = 'flex';
 		}
 
-		// --- Функция закрытия Pop-up ---
 		function closeNearbyPopup() {
 			nearbyPopup.style.display = 'none';
 			nearbyListContainer.innerHTML = '';
 		}
 
-		// --- Функция первоначальной загрузки КЭША из CSV ---
+		// --- Initial Data Fetch ---
 		async function fetchAllRecords() {
 			isLoading = true;
-			messageState.textContent = 'Загрузка данных. Пожалуйста подождите...';
-			// ... (rest of the function is the same)
-			outputContainer.style.display = 'none';
+			messageState.textContent = 'Загрузка данных...';
+			outputContainer.style.display = 'none'; messageState.classList.remove('error');
 			fullDatabaseCache = [];
 			try {
 				const nocacheUrl = `${GOOGLE_SHEET_CSV_URL}&_=${Date.now()}`;
 				const response = await fetch(nocacheUrl);
-				if (!response.ok) {
-					throw new Error(`Ошибка загрузки CSV: ${response.status} ${response.statusText}`);
-				}
+				if (!response.ok) throw new Error(`Ошибка загрузки CSV: ${response.status}`);
 				const csvText = await response.text();
 				fullDatabaseCache = parseCSV(csvText);
 				isLoading = false;
-				currentDisplayRecords = [];
-				displayRecords(currentDisplayRecords);
+				currentDisplayRecords = []; 
+				displayRecords(currentDisplayRecords); 
 			} catch (error) {
-				console.error('Ошибка загрузки базы данных из CSV:', error);
 				isLoading = false;
-				messageState.textContent = `Не удалось загрузить базу из Google Sheets: ${error.message}. Попробуйте обновить страницу.`;
+				messageState.textContent = `Ошибка загрузки базы данных: ${error.message}. Попробуйте обновить.`;
 				messageState.classList.add('error');
 				messageState.style.display = 'block';
 			}
 		}
 
-		// --- Обработчики событий ---
+		// --- Event Listeners Setup ---
 		document.addEventListener('DOMContentLoaded', () => {
+			// Search related elements and listeners
 			const searchModeToggleButtons = document.querySelectorAll('.search-mode-toggle input[name="search-mode"]');
 			const noteToggleButtons = document.querySelectorAll('.note-toggle input[name="note-mode"]');
 			const ignoreCharsToggleButtons = document.querySelectorAll('.ignore-chars-toggle input[name="ignore-mode"]');
+            closePopupButton = document.querySelector('.popup-close-btn');
 
 
 			searchInput.addEventListener('input', () => {
 				clearTimeout(debounceTimer);
 				debounceTimer = setTimeout(performSearch, DEBOUNCE_DELAY);
 			});
-
-			searchModeToggleButtons.forEach(radio => {
-				radio.addEventListener('change', () => {
-					if (searchInput.value.trim() !== '') {
-						performSearch();
-					}
-				});
-			});
-
-			coordToggleButtons.forEach(radio => {
-				radio.addEventListener('change', (event) => {
-					currentCoordMode = event.target.value; // 'izp', 'msk', 'gfu'
-					displayRecords(currentDisplayRecords);
-				});
-			});
-
-			noteToggleButtons.forEach(radio => {
-				radio.addEventListener('change', (event) => {
-					isNoteVisible = event.target.value === 'on';
-					displayRecords(currentDisplayRecords);
-				});
-			});
-
-			ignoreCharsToggleButtons.forEach(radio => {
-				radio.addEventListener('change', () => {
-					if (searchInput.value.trim() !== '') {
-						performSearch();
-					}
-				});
-			});
-
-			outputContainer.addEventListener('click', (event) => {
-				if (event.target.classList.contains('point-link')) {
-					event.preventDefault();
-					const recordId = event.target.dataset.id;
-					if (recordId) {
-						findAndShowNearby(recordId);
-					} else {
-						console.error("Could not find record ID on clicked link:", event.target);
-					}
+			searchModeToggleButtons.forEach(r => r.addEventListener('change', () => { if (searchInput.value.trim()) performSearch(); }));
+			searchCoordToggleButtons.forEach(r => r.addEventListener('change', (e) => { currentCoordMode = e.target.value; displayRecords(currentDisplayRecords); }));
+			noteToggleButtons.forEach(r => r.addEventListener('change', (e) => { isNoteVisible = e.target.value === 'on'; displayRecords(currentDisplayRecords); }));
+			ignoreCharsToggleButtons.forEach(r => r.addEventListener('change', () => { if (searchInput.value.trim()) performSearch(); }));
+			
+            outputContainer.addEventListener('click', (e) => {
+				if (e.target.classList.contains('point-link')) {
+					e.preventDefault();
+					const recordId = e.target.dataset.id;
+                    if (recordId) findAndShowNearby(recordId);
+                    else console.error("No record ID on link.");
 				}
 			});
+			
+            if(nearbyPopup) {
+                nearbyPopup.addEventListener('click', (e) => { if (e.target === nearbyPopup) closeNearbyPopup(); });
+            }
+            if(closePopupButton) {
+                closePopupButton.addEventListener('click', closeNearbyPopup);
+            }
 
-			nearbyPopup.addEventListener('click', (event) => {
-				if (event.target === nearbyPopup) {
-					closeNearbyPopup();
-				}
-			});
 
-			// --- Первоначальная загрузка данных ---
+            // Manual Conversion related elements and listeners
+            manualSourceSystemRadios = document.querySelectorAll('input[name="manual-source-system"]');
+            manualTargetSystemRadios = document.querySelectorAll('input[name="manual-target-system"]');
+            manualCoordXInput = document.getElementById('manual-coord-x');
+            manualCoordYInput = document.getElementById('manual-coord-y');
+            manualResultXSpan = document.getElementById('manual-conversion-result-x');
+            manualResultYSpan = document.getElementById('manual-conversion-result-y');
+
+            manualSourceSystemRadios.forEach(radio => radio.addEventListener('change', updateManualConversion));
+            manualTargetSystemRadios.forEach(radio => radio.addEventListener('change', updateManualConversion));
+            manualCoordXInput.addEventListener('input', updateManualConversion);
+            manualCoordYInput.addEventListener('input', updateManualConversion);
+
 			fetchAllRecords();
+            updateManualConversion(); 
 		});
 	</script>
 </body>
-
 </html>
