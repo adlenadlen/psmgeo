@@ -271,10 +271,12 @@
 			<div class="control-row">
 				<span class="control-label">Система координат:</span>
 				<div class="coord-toggle">
-					<input type="radio" id="toggle-stroi" name="coord-system" value="stroi" checked>
-					<label for="toggle-stroi">Стройсетка</label>
+					<input type="radio" id="toggle-izp" name="coord-system" value="izp" checked>
+					<label for="toggle-izp">ИЗП</label>
 					<input type="radio" id="toggle-msk" name="coord-system" value="msk">
 					<label for="toggle-msk">МСК</label>
+					<input type="radio" id="toggle-gfu" name="coord-system" value="gfu">
+					<label for="toggle-gfu">ГФУ</label>
 				</div>
 			</div>
 			<div class="control-row">
@@ -336,88 +338,81 @@
 		const BASE_X_FIELD_NAME = 'Xraw';
 		const BASE_Y_FIELD_NAME = 'Yraw';
 		const COL_INDEX = {
-			Point: 0,
-			Xraw: 1,
-			Yraw: 2,
-			H: 3,
-			Info: 4
+			CoordSystem: 0,
+			Point: 1,
+			Xraw: 2,
+			Yraw: 3,
+			H: 4,
+			Info: 5
 		};
 		const DEBOUNCE_DELAY = 400;
 		const MAX_NEARBY_DISTANCE = 300;
+
+		// --- Параметры для преобразования ИЗП (Стройсетка/SS) ---
+		const X0_SS_IN_MSK = 6305600;
+		const Y0_SS_IN_MSK = 557800;
+		const K1_SS = 0.8048621495;
+		const K2_SS = 0.5934618103;
+
+		// --- Параметры для преобразования ГФУ (GFU) ---
+		const X0_GFU_IN_MSK = 6301571.65;
+		const Y0_GFU_IN_MSK = 561132.43;
+		const K1_GFU = 0.4303677383;
+		const K2_GFU = 0.90265363489;
+
 		// --- Глобальные переменные ---
 		let fullDatabaseCache = [];
 		let currentDisplayRecords = [];
-		let currentCoordMode = 'stroi';
+		let currentCoordMode = 'izp'; // 'izp', 'msk', or 'gfu'
 		let isNoteVisible = true;
 		let shouldIgnoreChars = false;
 		let debounceTimer;
 		let isLoading = false;
+
 		// --- Элементы DOM ---
 		const outputContainer = document.getElementById('output-list');
 		const messageState = document.getElementById('airtable-message-state');
 		const coordToggleButtons = document.querySelectorAll('.coord-toggle input[name="coord-system"]');
 		const searchInput = document.getElementById('search-input');
-		const searchModeToggleButtons = document.querySelectorAll('.search-mode-toggle input[name="search-mode"]');
-		const noteToggleButtons = document.querySelectorAll('.note-toggle input[name="note-mode"]');
-		const ignoreCharsToggleButtons = document.querySelectorAll('.ignore-chars-toggle input[name="ignore-mode"]');
+		// ... (other DOM elements) ...
 		const nearbyPopup = document.getElementById('nearby-popup');
 		const nearbyListContainer = document.getElementById('nearby-list');
+
+
 		// --- Вспомогательные функции ---
 		function formatCoordinate(value) {
-			if (value === null || typeof value === 'undefined') {
+			if (value === null || typeof value === 'undefined' || isNaN(value)) {
 				return 'N/A';
 			}
-			const num = parseFloat(value);
-			if (!isNaN(num)) {
-				return num.toFixed(3);
-			}
-			return value;
+			return parseFloat(value).toFixed(3);
 		}
 
 		function normalizePointValue(str) {
 			if (!str) return '';
 			return str.toLowerCase().replace(/[\._,\-]/g, '');
 		}
-		const K1 = 0.8048621495;
-		const K2 = 0.5934618103;
-		const X0_MSK = 6305600;
-		const Y0_MSK = 557800;
 
-		function getXss(xBase, yBase) {
-			if (isNaN(xBase) || isNaN(yBase)) return NaN;
-			if (xBase < 10000) {
-				return xBase;
-			} else {
-				return (xBase - X0_MSK) * K1 + (yBase - Y0_MSK) * K2;
-			}
+		// --- Общие функции преобразования координат ---
+		function convertMskToLocalX(xMsk, yMsk, X0_Local_IN_MSK, Y0_Local_IN_MSK, K1_Local, K2_Local) {
+			if (isNaN(xMsk) || isNaN(yMsk)) return NaN;
+			return (xMsk - X0_Local_IN_MSK) * K1_Local + (yMsk - Y0_Local_IN_MSK) * K2_Local;
 		}
 
-		function getYss(xBase, yBase) {
-			if (isNaN(xBase) || isNaN(yBase)) return NaN;
-			if (xBase < 10000) {
-				return yBase;
-			} else {
-				return (yBase - Y0_MSK) * K1 - (xBase - X0_MSK) * K2;
-			}
+		function convertMskToLocalY(xMsk, yMsk, X0_Local_IN_MSK, Y0_Local_IN_MSK, K1_Local, K2_Local) {
+			if (isNaN(xMsk) || isNaN(yMsk)) return NaN;
+			return (yMsk - Y0_Local_IN_MSK) * K1_Local - (xMsk - X0_Local_IN_MSK) * K2_Local;
 		}
 
-		function getXmsk(xBase, yBase) {
-			if (isNaN(xBase) || isNaN(yBase)) return NaN;
-			if (xBase >= 10000) {
-				return xBase;
-			} else {
-				return X0_MSK + xBase * K1 - yBase * K2;
-			}
+		function convertLocalToMskX(xLocal, yLocal, X0_Local_IN_MSK, Y0_Local_IN_MSK, K1_Local, K2_Local) {
+			if (isNaN(xLocal) || isNaN(yLocal)) return NaN;
+			return X0_Local_IN_MSK + xLocal * K1_Local - yLocal * K2_Local;
 		}
 
-		function getYmsk(xBase, yBase) { // ПРОВЕРЬТЕ ЭТУ ФОРМУЛУ!
-			if (isNaN(xBase) || isNaN(yBase)) return NaN;
-			if (xBase >= 10000) {
-				return yBase;
-			} else {
-				return Y0_MSK + xBase * K2 + yBase * K1;
-			}
+		function convertLocalToMskY(xLocal, yLocal, X0_Local_IN_MSK, Y0_Local_IN_MSK, K1_Local, K2_Local) {
+			if (isNaN(xLocal) || isNaN(yLocal)) return NaN;
+			return Y0_Local_IN_MSK + xLocal * K2_Local + yLocal * K1_Local;
 		}
+
 		// --- Парсер CSV ---
 		function parseCSV(csvText) {
 			const lines = csvText.trim().split('\n');
@@ -425,10 +420,11 @@
 				const cleanedLine = line.trim();
 				if (!cleanedLine) return null;
 				const parts = cleanedLine.split(',');
-				if (parts.length >= 5) {
+				if (parts.length >= 6) {
 					return {
 						id: `gs_${index + 1}`,
 						fields: {
+							CoordSystem: parts[COL_INDEX.CoordSystem]?.trim().toUpperCase() || 'UNKNOWN', // Default to UNKNOWN
 							Point: parts[COL_INDEX.Point]?.trim() || '',
 							[BASE_X_FIELD_NAME]: parts[COL_INDEX.Xraw]?.trim() || '',
 							[BASE_Y_FIELD_NAME]: parts[COL_INDEX.Yraw]?.trim() || '',
@@ -443,6 +439,75 @@
 			}).filter(record => record !== null);
 			return records;
 		}
+
+		// --- Helper function to get coordinates in the target display mode ---
+		function getCoordsInTargetMode(recordFields, targetMode_lowercase) {
+			const xBaseRaw = recordFields[BASE_X_FIELD_NAME];
+			const yBaseRaw = recordFields[BASE_Y_FIELD_NAME];
+			// sourceSystemFromCSV is already uppercase from parseCSV (e.g., "IZP", "MSK", "GFU")
+			const sourceSystemFromCSV_uppercase = recordFields['CoordSystem'];
+
+			const xBase = parseFloat(xBaseRaw);
+			const yBase = parseFloat(yBaseRaw);
+
+			if (isNaN(xBase) || isNaN(yBase)) {
+				console.warn(`Invalid base coordinates for point ${recordFields['Point']}: X='${xBaseRaw}', Y='${yBaseRaw}'`);
+				return { x: NaN, y: NaN };
+			}
+
+			// If source system from CSV matches the target display mode, no conversion needed.
+			if (sourceSystemFromCSV_uppercase === targetMode_lowercase.toUpperCase()) {
+				return { x: xBase, y: yBase };
+			}
+
+			let xMsk, yMsk; // Intermediate MSK coordinates
+
+			// Step 1: Convert source coordinates (xBase, yBase) to MSK
+			//         (unless source is already MSK and target is not MSK)
+			switch (sourceSystemFromCSV_uppercase) {
+				case 'MSK':
+					xMsk = xBase;
+					yMsk = yBase;
+					break;
+				case 'IZP': // IZP (StroySetka/SS) to MSK
+					xMsk = convertLocalToMskX(xBase, yBase, X0_SS_IN_MSK, Y0_SS_IN_MSK, K1_SS, K2_SS);
+					yMsk = convertLocalToMskY(xBase, yBase, X0_SS_IN_MSK, Y0_SS_IN_MSK, K1_SS, K2_SS);
+					break;
+				case 'GFU': // GFU to MSK
+					xMsk = convertLocalToMskX(xBase, yBase, X0_GFU_IN_MSK, Y0_GFU_IN_MSK, K1_GFU, K2_GFU);
+					yMsk = convertLocalToMskY(xBase, yBase, X0_GFU_IN_MSK, Y0_GFU_IN_MSK, K1_GFU, K2_GFU);
+					break;
+				default:
+					console.warn(`Unknown source coordinate system '${sourceSystemFromCSV_uppercase}' for point ${recordFields['Point']}`);
+					return { x: NaN, y: NaN };
+			}
+
+			if (isNaN(xMsk) || isNaN(yMsk)) {
+				console.warn(`Conversion to MSK failed for point ${recordFields['Point']} from source ${sourceSystemFromCSV_uppercase}`);
+				return { x: NaN, y: NaN };
+			}
+
+			// Step 2: Convert from MSK to the targetMode (if target is not MSK itself)
+			//         The case where targetMode is MSK is already handled if source was MSK (by the first if condition)
+			//         or if source was not MSK, then xMsk, yMsk are the correct values.
+			switch (targetMode_lowercase) {
+				case 'msk':
+					return { x: xMsk, y: yMsk };
+				case 'izp': // MSK to IZP (StroySetka/SS)
+					const xIzp = convertMskToLocalX(xMsk, yMsk, X0_SS_IN_MSK, Y0_SS_IN_MSK, K1_SS, K2_SS);
+					const yIzp = convertMskToLocalY(xMsk, yMsk, X0_SS_IN_MSK, Y0_SS_IN_MSK, K1_SS, K2_SS);
+					return { x: xIzp, y: yIzp };
+				case 'gfu': // MSK to GFU
+					const xGfu = convertMskToLocalX(xMsk, yMsk, X0_GFU_IN_MSK, Y0_GFU_IN_MSK, K1_GFU, K2_GFU);
+					const yGfu = convertMskToLocalY(xMsk, yMsk, X0_GFU_IN_MSK, Y0_GFU_IN_MSK, K1_GFU, K2_GFU);
+					return { x: xGfu, y: yGfu };
+				default:
+					console.warn(`Unknown target coordinate mode: '${targetMode_lowercase}'`);
+					return { x: NaN, y: NaN };
+			}
+		}
+
+
 		// --- Функция для отображения данных ---
 		function displayRecords(records) {
 			outputContainer.innerHTML = '';
@@ -469,27 +534,24 @@
 			messageState.style.display = 'none';
 			outputContainer.style.display = 'block';
 			const fragment = document.createDocumentFragment();
+
 			records.forEach(record => {
 				const point = record.fields['Point'] || 'N/A';
 				const info = record.fields['Info'] || 'N/A';
 				const h = record.fields['H'] || 'N/A';
-				const xBase = parseFloat(record.fields[BASE_X_FIELD_NAME]);
-				const yBase = parseFloat(record.fields[BASE_Y_FIELD_NAME]);
-				let calculatedX, calculatedY;
-				if (currentCoordMode === 'stroi') {
-					calculatedX = getXss(xBase, yBase);
-					calculatedY = getYss(xBase, yBase);
-				} else {
-					calculatedX = getXmsk(xBase, yBase);
-					calculatedY = getYmsk(xBase, yBase);
-				}
-				const formattedX = formatCoordinate(calculatedX);
-				const formattedY = formatCoordinate(calculatedY);
-				const formattedH = formatCoordinate(h);
+
+				// currentCoordMode is already lowercase e.g. 'izp', 'msk', 'gfu'
+				const targetCoords = getCoordsInTargetMode(record.fields, currentCoordMode);
+
+				const formattedX = formatCoordinate(targetCoords.x);
+				const formattedY = formatCoordinate(targetCoords.y);
+				const formattedH = formatCoordinate(h); // H is assumed to be absolute and not transformed
+
 				let outputStringPart = `,${formattedX},${formattedY},${formattedH},`;
 				if (isNoteVisible) {
 					outputStringPart += info;
 				}
+
 				const lineDiv = document.createElement('div');
 				lineDiv.className = 'output-line';
 				const pointLink = document.createElement('a');
@@ -498,17 +560,23 @@
 				pointLink.href = '#';
 				pointLink.dataset.id = record.id;
 				lineDiv.appendChild(pointLink);
-				lineDiv.append(outputStringPart); // или lineDiv.appendChild(document.createTextNode(outputStringPart));
+				lineDiv.appendChild(document.createTextNode(outputStringPart));
 				fragment.appendChild(lineDiv);
 			});
 			outputContainer.appendChild(fragment);
 		}
+
 		// --- Функция для КЛИЕНТСКОГО поиска в кэше ---
 		function performSearch() {
 			if (isLoading) return;
 			const searchTerm = searchInput.value.trim();
-			shouldIgnoreChars = document.querySelector('.ignore-chars-toggle input[name="ignore-mode"]:checked').value === 'on';
-			const searchMode = document.querySelector('.search-mode-toggle input[name="search-mode"]:checked').value;
+			const searchModeToggle = document.querySelector('.search-mode-toggle input[name="search-mode"]:checked');
+			const ignoreCharsToggle = document.querySelector('.ignore-chars-toggle input[name="ignore-mode"]:checked');
+
+			shouldIgnoreChars = ignoreCharsToggle ? ignoreCharsToggle.value === 'on' : false;
+			const searchMode = searchModeToggle ? searchModeToggle.value : 'contains';
+
+
 			if (!searchTerm) {
 				currentDisplayRecords = [];
 				displayRecords(currentDisplayRecords);
@@ -518,9 +586,9 @@
 			messageState.style.display = 'block';
 			messageState.classList.remove('error');
 			outputContainer.style.display = 'none';
+
 			const queryForComparison = shouldIgnoreChars ? normalizePointValue(searchTerm) : searchTerm.toLowerCase();
 			const filteredRecords = fullDatabaseCache.filter(record => {
-				// const fieldNameToSearch = 'Point'; // Всегда ищем по Point
 				const rawFieldValue = record.fields['Point'];
 				if (!rawFieldValue) return false;
 				const fieldValueForComparison = shouldIgnoreChars ? normalizePointValue(rawFieldValue) : rawFieldValue.toLowerCase();
@@ -533,6 +601,7 @@
 			currentDisplayRecords = filteredRecords;
 			displayRecords(currentDisplayRecords);
 		}
+
 		// --- Функция расчета расстояний и показа Pop-up ---
 		function findAndShowNearby(clickedRecordId) {
 			const referencePoint = fullDatabaseCache.find(r => r.id === clickedRecordId);
@@ -540,41 +609,31 @@
 				console.error("Reference point not found in cache:", clickedRecordId);
 				return;
 			}
-			const coordMode = currentCoordMode;
-			const refXBase = parseFloat(referencePoint.fields[BASE_X_FIELD_NAME]);
-			const refYBase = parseFloat(referencePoint.fields[BASE_Y_FIELD_NAME]);
-			let refX, refY;
-			if (coordMode === 'stroi') {
-				refX = getXss(refXBase, refYBase);
-				refY = getYss(refXBase, refYBase);
-			} else {
-				refX = getXmsk(refXBase, refYBase);
-				refY = getYmsk(refXBase, refYBase);
-			}
+
+			// currentCoordMode is lowercase
+			const refCoords = getCoordsInTargetMode(referencePoint.fields, currentCoordMode);
+			const refX = refCoords.x;
+			const refY = refCoords.y;
+
 			if (isNaN(refX) || isNaN(refY)) {
-				// TODO: Рассмотреть замену alert на более мягкое уведомление
-				alert('Невозможно рассчитать расстояние: у выбранной точки некорректные базовые координаты.');
+				alert(`Невозможно рассчитать расстояние: у выбранной точки (${referencePoint.fields['Point']}) некорректные или неизвестные базовые координаты для текущего режима отображения (${currentCoordMode}). Исходная система: ${referencePoint.fields['CoordSystem']}`);
 				return;
 			}
-			// console.log(`Finding nearby for ${referencePoint.fields['Point']} (RefCoords: ${refX}, ${refY}) in ${coordMode} mode`);
+
 			const nearbyPoints = [];
 			fullDatabaseCache.forEach(candidateRecord => {
 				if (candidateRecord.id === clickedRecordId) return;
-				const candXBase = parseFloat(candidateRecord.fields[BASE_X_FIELD_NAME]);
-				const candYBase = parseFloat(candidateRecord.fields[BASE_Y_FIELD_NAME]);
-				if (isNaN(candXBase) || isNaN(candYBase)) return;
-				let candX, candY;
-				if (coordMode === 'stroi') {
-					candX = getXss(candXBase, candYBase);
-					candY = getYss(candXBase, candYBase);
-				} else {
-					candX = getXmsk(candXBase, candYBase);
-					candY = getYmsk(candXBase, candYBase);
-				}
+
+				const candCoords = getCoordsInTargetMode(candidateRecord.fields, currentCoordMode);
+				const candX = candCoords.x;
+				const candY = candCoords.y;
+
 				if (isNaN(candX) || isNaN(candY)) return;
+
 				const deltaX = candX - refX;
 				const deltaY = candY - refY;
 				const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
 				if (distance <= MAX_NEARBY_DISTANCE) {
 					nearbyPoints.push({
 						record: candidateRecord,
@@ -584,8 +643,10 @@
 					});
 				}
 			});
+
 			nearbyPoints.sort((a, b) => a.distance - b.distance);
 			nearbyListContainer.innerHTML = '';
+
 			const refPointData = referencePoint.fields;
 			const refFormattedX = formatCoordinate(refX);
 			const refFormattedY = formatCoordinate(refY);
@@ -598,6 +659,7 @@
 			refElement.className = 'reference-point';
 			refElement.innerHTML = `<strong>Исходная:</strong> ${refOutputString}`;
 			nearbyListContainer.appendChild(refElement);
+
 			if (nearbyPoints.length > 0) {
 				nearbyPoints.forEach(item => {
 					const recordData = item.record.fields;
@@ -622,21 +684,21 @@
 			}
 			nearbyPopup.style.display = 'flex';
 		}
+
 		// --- Функция закрытия Pop-up ---
 		function closeNearbyPopup() {
 			nearbyPopup.style.display = 'none';
-			nearbyListContainer.innerHTML = ''; // Очищаем содержимое при закрытии
+			nearbyListContainer.innerHTML = '';
 		}
+
 		// --- Функция первоначальной загрузки КЭША из CSV ---
 		async function fetchAllRecords() {
 			isLoading = true;
 			messageState.textContent = 'Загрузка данных. Пожалуйста подождите...';
-			messageState.style.display = 'block';
-			messageState.classList.remove('error');
+			// ... (rest of the function is the same)
 			outputContainer.style.display = 'none';
 			fullDatabaseCache = [];
 			try {
-				// console.log('Fetching CSV from:', GOOGLE_SHEET_CSV_URL);
 				const nocacheUrl = `${GOOGLE_SHEET_CSV_URL}&_=${Date.now()}`;
 				const response = await fetch(nocacheUrl);
 				if (!response.ok) {
@@ -644,7 +706,6 @@
 				}
 				const csvText = await response.text();
 				fullDatabaseCache = parseCSV(csvText);
-				// console.log(`База данных (${fullDatabaseCache.length} записей) загружена из CSV.`);
 				isLoading = false;
 				currentDisplayRecords = [];
 				displayRecords(currentDisplayRecords);
@@ -656,55 +717,70 @@
 				messageState.style.display = 'block';
 			}
 		}
+
 		// --- Обработчики событий ---
-		searchInput.addEventListener('input', () => {
-			clearTimeout(debounceTimer);
-			debounceTimer = setTimeout(performSearch, DEBOUNCE_DELAY);
-		});
-		searchModeToggleButtons.forEach(radio => {
-			radio.addEventListener('change', () => {
-				if (searchInput.value.trim() !== '') {
-					performSearch();
+		document.addEventListener('DOMContentLoaded', () => {
+			const searchModeToggleButtons = document.querySelectorAll('.search-mode-toggle input[name="search-mode"]');
+			const noteToggleButtons = document.querySelectorAll('.note-toggle input[name="note-mode"]');
+			const ignoreCharsToggleButtons = document.querySelectorAll('.ignore-chars-toggle input[name="ignore-mode"]');
+
+
+			searchInput.addEventListener('input', () => {
+				clearTimeout(debounceTimer);
+				debounceTimer = setTimeout(performSearch, DEBOUNCE_DELAY);
+			});
+
+			searchModeToggleButtons.forEach(radio => {
+				radio.addEventListener('change', () => {
+					if (searchInput.value.trim() !== '') {
+						performSearch();
+					}
+				});
+			});
+
+			coordToggleButtons.forEach(radio => {
+				radio.addEventListener('change', (event) => {
+					currentCoordMode = event.target.value; // 'izp', 'msk', 'gfu'
+					displayRecords(currentDisplayRecords);
+				});
+			});
+
+			noteToggleButtons.forEach(radio => {
+				radio.addEventListener('change', (event) => {
+					isNoteVisible = event.target.value === 'on';
+					displayRecords(currentDisplayRecords);
+				});
+			});
+
+			ignoreCharsToggleButtons.forEach(radio => {
+				radio.addEventListener('change', () => {
+					if (searchInput.value.trim() !== '') {
+						performSearch();
+					}
+				});
+			});
+
+			outputContainer.addEventListener('click', (event) => {
+				if (event.target.classList.contains('point-link')) {
+					event.preventDefault();
+					const recordId = event.target.dataset.id;
+					if (recordId) {
+						findAndShowNearby(recordId);
+					} else {
+						console.error("Could not find record ID on clicked link:", event.target);
+					}
 				}
 			});
-		});
-		coordToggleButtons.forEach(radio => {
-			radio.addEventListener('change', (event) => {
-				currentCoordMode = event.target.value;
-				displayRecords(currentDisplayRecords);
-			});
-		});
-		noteToggleButtons.forEach(radio => {
-			radio.addEventListener('change', (event) => {
-				isNoteVisible = event.target.value === 'on';
-				displayRecords(currentDisplayRecords);
-			});
-		});
-		ignoreCharsToggleButtons.forEach(radio => {
-			radio.addEventListener('change', () => {
-				if (searchInput.value.trim() !== '') {
-					performSearch();
+
+			nearbyPopup.addEventListener('click', (event) => {
+				if (event.target === nearbyPopup) {
+					closeNearbyPopup();
 				}
 			});
+
+			// --- Первоначальная загрузка данных ---
+			fetchAllRecords();
 		});
-		outputContainer.addEventListener('click', (event) => {
-			if (event.target.classList.contains('point-link')) {
-				event.preventDefault();
-				const recordId = event.target.dataset.id;
-				if (recordId) {
-					findAndShowNearby(recordId);
-				} else {
-					console.error("Could not find record ID on clicked link:", event.target);
-				}
-			}
-		});
-		nearbyPopup.addEventListener('click', (event) => {
-			if (event.target === nearbyPopup) { // Закрытие по клику на оверлей
-				closeNearbyPopup();
-			}
-		});
-		// --- Первоначальная загрузка данных ---
-		fetchAllRecords();
 	</script>
 </body>
 
