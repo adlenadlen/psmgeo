@@ -5,15 +5,21 @@
     <meta content="width=device-width,initial-scale=1" name="viewport">
     <title>Заявление на Межвахтовый Отдых (ИТР)</title>
     <meta content="Форма заявления на межвахтовый отдых для ИТР в системе psmgeo." name="description">
-    <link href="/style.css" rel="stylesheet"> <!-- Предполагаем, что style.css в корне проекта -->
-    <link href="/favicon.png" rel="icon" type="image/png"> <!-- Предполагаем, что favicon.png в корне проекта -->
+    <link href="/style.css" rel="stylesheet">
+    <link href="/favicon.png" rel="icon" type="image/png">
+    <style>
+        /* Дополнительные стили для скрытия/отображения полей */
+        .hidden-fields {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <div class="page-container">
         <nav aria-label="breadcrumb" class="breadcrumbs">
             <ol>
                 <li><a href="/">Главная</a></li>
-                <li><a href="/docs/">Заявления</a></li> <!-- Предполагается, что /docs/index.html - список заявлений -->
+                <li><a href="/docs/">Заявления</a></li>
                 <li aria-current="page" class="current">Межвахтовый отдых (ИТР)</li>
             </ol>
         </nav>
@@ -23,20 +29,25 @@
             <section>
                 <h2>Персональные данные</h2>
                 <div class="vertical">
-                    <label for="gender">Пол (для корректного склонения):</label>
-                    <select id="gender" name="gender" required style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
-                        <option value="">Выберите пол</option>
-                        <option value="male">Мужской</option>
+                    <label for="gender">Пол:</label>
+                    <select id="gender" name="gender" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+                        <option value="male" selected>Мужской</option>
                         <option value="female">Женский</option>
-                        <!-- <option value="androgynous">Не указан</option> --><!-- Petrovich поддерживает, но возможно не нужно -->
+                    </select>
+
+                    <label for="citizenship">Гражданство:</label>
+                    <select id="citizenship" name="citizenship" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+                        <option value="RU" selected>РФ</option>
+                        <option value="other">Иное</option>
                     </select>
 
                     <label for="cyr_name">ФИО (кириллица, полностью, например: Иванов Иван Иванович):</label>
                     <input type="text" id="cyr_name" name="cyr_name" placeholder="Иванов Иван Иванович" required style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
                     
-                    <!-- Поле для латиницы можно скрыть и заполнять JS, либо оставить для ручного ввода/коррекции -->
-                    <label for="lat_name_input">ФИО (латиница, если отличается от авто-транслитерации):</label>
-                    <input type="text" id="lat_name_input" name="lat_name_input" placeholder="Ivanov Ivan Ivanovich" style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
+                    <div id="foreignCitizenFields" class="hidden-fields"> <!-- Контейнер для полей иностранца -->
+                        <label for="lat_name_auto">ФИО (латиница, автоматически):</label>
+                        <input type="text" id="lat_name_auto" name="lat_name_auto" readonly style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px; background-color: #f0f0f0;">
+                    </div>
 
                     <label for="birthday">Дата рождения:</label>
                     <input type="date" id="birthday" name="birthday" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
@@ -52,8 +63,10 @@
                     <label for="passport_number">Серия и номер паспорта:</label>
                     <input type="text" id="passport_number" name="passport_number" placeholder="0000 123456" required style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
 
-                    <label for="passport_expire">Срок действия паспорта (для иностранных граждан):</label>
-                    <input type="date" id="passport_expire" name="passport_expire" style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+                    <div id="passportExpireFieldContainer" class="hidden-fields"> <!-- Контейнер для срока паспорта иностранца -->
+                        <label for="passport_expire">Срок действия паспорта (для иностранных граждан):</label>
+                        <input type="date" id="passport_expire" name="passport_expire" style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+                    </div>
                 </div>
             </section>
             
@@ -76,7 +89,7 @@
                     <input type="date" id="mo_to" name="mo_to" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
                     
                     <label for="mo_duration">Продолжительность МО (дней, если отличается от авторасчета):</label>
-                    <input type="number" id="mo_duration" name="mo_duration" placeholder="Например: 14" style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+                    <input type="number" id="mo_duration" name="mo_duration" placeholder="Например: 14" min="1" style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
                     
                     <label for="path">Маршрут следования к месту отдыха (Город):</label>
                     <input type="text" id="path" name="path" placeholder="Город" style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
@@ -87,12 +100,12 @@
         </form>
     </div>
 
-    <!-- Подключение ВСЕХ библиотек ЛОКАЛЬНО -->
-    <script src="/docs/lib/petrovich.min.js"></script>
-    <script src="/docs/lib/transliterate.min.js"></script>
-    <script src="/docs/lib/pizzip.min.js"></script>
-    <script src="/docs/lib/docxtemplater.min.js"></script> <!-- или .js, если нет .min.js версии -->
-    <script src="/docs/lib/FileSaver.min.js"></script>
+    <!-- Подключение библиотек через CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.1.4/pizzip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.47.1/docxtemplater.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/petrovich@0.2.1/dist/petrovich.min.js"></script> <!-- Petrovich-JS -->
+    <script src="https://cdn.jsdelivr.net/npm/slug@8.2.3/slug.min.js"></script> <!-- Slug для транслитерации -->
     
     <!-- Ваш основной скрипт -->
     <script src="/docs/mo_itr.js"></script>
