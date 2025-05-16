@@ -49,6 +49,34 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // --- Упрощенная функция склонения должностей (мужской род, родительный падеж) ---
+    // ЭТУ ФУНКЦИЮ НУЖНО РАСШИРЯТЬ И УЛУЧШАТЬ!
+    function declinePositionToGenitiveMale(position) {
+        if (!position) return '';
+        position = position.trim().toLowerCase(); // Приводим к нижнему регистру для сравнения
+
+        // Простые правила для примера. Нужна более сложная логика или библиотека.
+        if (position.endsWith('ер') || position.endsWith('ор') || position.endsWith('ель') || position.endsWith('арь')) { // инженер, директор, учитель, секретарь
+            return position + 'а';
+        } else if (position.endsWith('ист')) { // программист, экономист
+            return position + 'а';
+        } else if (position.endsWith('ик')) { // механик, техник
+             return position.slice(0, -2) + 'ика';
+        } else if (position.endsWith('аг') || position.endsWith('ог')) { // педагог
+             return position.slice(0, -2) + 'ога';
+        } else if (position.endsWith('ец')) { // продавец
+            return position.slice(0, -2) + 'ца';
+        }
+        // ... другие правила ...
+
+        // Если нет правила, возвращаем исходную (или добавляем 'а' как очень грубое приближение)
+        console.warn(`Для должности "${position}" не найдено точное правило склонения в родительный падеж (м.р.). Возвращено исходное или примерное.`);
+        // Можно вернуть position + 'а' как очень грубое предположение для многих сущ. м.р. на согл.
+        // Но лучше вернуть исходное, если нет уверенности.
+        return position; // Или более умное правило по умолчанию
+    }
+
+
     citizenshipSelect.addEventListener('change', toggleForeignFields);
     cyrNameInput.addEventListener('input', updateAutoLatName);
 
@@ -79,74 +107,71 @@ document.addEventListener('DOMContentLoaded', function () {
         
         // 3. ФИО и Должность
         let cyrNameRaw = formData.get('cyr_name').trim();
-        let positionRaw = formData.get('position').trim();
-        const gender = formData.get('gender'); 
+        let positionRaw = formData.get('position').trim(); // Получаем должность как есть
+        const genderForFIO = formData.get('gender'); // Пол для склонения ФИО
 
-        data.cyr_name = cyrNameRaw || ''; // Именительный падеж
+        data.cyr_name = cyrNameRaw || ''; 
         if (positionRaw && positionRaw.length > 0) {
+            // Сохраняем должность в именительном падеже, но с маленькой буквы
             data.position = positionRaw.charAt(0).toLowerCase() + positionRaw.slice(1);
         } else {
             data.position = '';
         }
 
-        console.log("--- Отладка Petrovich ---");
+        console.log("--- Отладка Petrovich и склонения должности ---");
         console.log("Исходное ФИО:", cyrNameRaw);
-        console.log("Исходная должность:", data.position); // Используем уже обработанную должность
-        console.log("Выбранный пол:", gender);
+        console.log("Должность (И.п., обработанная):", data.position);
+        console.log("Выбранный пол для ФИО:", genderForFIO);
 
-        if (typeof petrovich === 'function') { // Проверяем, что petrovich - это функция
+        // Склонение ФИО с помощью Petrovich
+        if (typeof petrovich === 'function') {
             console.log("Функция petrovich найдена.");
-
-            // Склонение ФИО
-            if (cyrNameRaw && gender) {
+            if (cyrNameRaw && genderForFIO) {
                 const nameParts = cyrNameRaw.split(/\s+/);
                 const personDataForPetrovich = {
-                    gender: gender,
-                    first: nameParts[1] || '',  // Имя
-                    last: nameParts[0] || '',   // Фамилия
-                    middle: nameParts[2] || '' // Отчество
+                    gender: genderForFIO,
+                    first: nameParts[1] || '',
+                    last: nameParts[0] || '',
+                    middle: nameParts[2] || ''
                 };
-                // Если отчество есть, пол можно не указывать, petrovich его определит
-                if (personDataForPetrovich.middle) {
-                    delete personDataForPetrovich.gender; 
+                if (personDataForPetrovich.middle && !genderForFIO) { // Если пол не был выбран, но есть отчество
+                     delete personDataForPetrovich.gender;
                 }
-
-
                 console.log("Данные для petrovich(ФИО):", personDataForPetrovich);
                 try {
-                    const declinedPerson = petrovich(personDataForPetrovich, 'genitive'); // Родительный падеж
+                    const declinedPerson = petrovich(personDataForPetrovich, 'genitive'); 
                     console.log("Petrovich результат (объект ФИО):", declinedPerson);
-                    // Собираем полное ФИО из склоненных частей
                     data.cyr_name_genitive = [declinedPerson.last, declinedPerson.first, declinedPerson.middle]
-                                              .filter(Boolean) // Убираем пустые части (если нет отчества)
-                                              .join(' ');
+                                              .filter(Boolean).join(' ');
                     console.log("Petrovich результат (ФИО, родительный, строка):", data.cyr_name_genitive);
-
                     if (data.cyr_name_genitive.toLowerCase() === cyrNameRaw.toLowerCase() && cyrNameRaw !== "") {
                          console.warn("Petrovich возможно НЕ склонил ФИО. Имя:", cyrNameRaw, "Результат:", data.cyr_name_genitive);
                     }
                 } catch (e) {
                     console.error("Ошибка при вызове petrovich для ФИО:", e, personDataForPetrovich);
-                    data.cyr_name_genitive = cyrNameRaw; // fallback
+                    data.cyr_name_genitive = cyrNameRaw;
                 }
             } else {
                 data.cyr_name_genitive = cyrNameRaw || '';
             }
-
-            // Склонение Должности
-            // ВНИМАНИЕ: Оригинальный petrovich-js НЕ УМЕЕТ склонять произвольные должности.
-            // Он работает только с ФИО (first, last, middle).
-            // Если вам нужно склонять должности, вам нужна другая библиотека или решение.
-            data.position_genitive = data.position; // ЗАГЛУШКА: оставляем должность в именительном падеже
-            console.warn("Petrovich-JS (оригинальная версия) не склоняет должности. Плейсхолдер {position_genitive} будет равен {position}. Должность:", data.position);
-            
         } else {
-            console.warn("Функция petrovich не найдена или не загружена. Склонение не будет выполнено.");
+            console.warn("Функция petrovich не найдена. Склонение ФИО не будет выполнено.");
             data.cyr_name_genitive = cyrNameRaw || '';
-            data.position_genitive = data.position;
         }
-        console.log("--- Конец отладки Petrovich ---");
 
+        // Склонение Должности (используем нашу упрощенную функцию)
+        if (data.position) {
+            let declinedPos = declinePositionToGenitiveMale(data.position);
+            // Возвращаем первую букву в тот регистр, который был у исходной первой буквы data.position
+            // (т.к. data.position уже с маленькой первой, то и результат будет с маленькой)
+            // Если нужно, чтобы первая буква была заглавной в шаблоне, это делается в шаблоне или тут:
+            // declinedPos = declinedPos.charAt(0).toUpperCase() + declinedPos.slice(1);
+            data.position_genitive = declinedPos;
+            console.log("Должность (Р.п., мужской род, результат declinePositionToGenitiveMale):", data.position_genitive);
+        } else {
+            data.position_genitive = '';
+        }
+        console.log("--- Конец отладки ---");
 
         // 4. Данные для иностранного гражданина
         data.lat_name = '';
@@ -161,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // 5. Расчеты длительностей
+        // 5. Расчеты длительностей (оставил без изменений, т.к. они не затрагивались)
         const moDurationInput = formData.get('mo_duration');
         if (moDurationInput) {
             data.mo_duration = moDurationInput;
