@@ -2,160 +2,159 @@ document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('moItrForm');
     const citizenshipSelect = document.getElementById('citizenship');
     const foreignCitizenFieldsDiv = document.getElementById('foreignCitizenFields');
-    const latNameAutoInput = document.getElementById('lat_name_auto');
+    const latNameAutoDisplayInput = document.getElementById('lat_name_auto_display'); // Обновлено имя переменной
     const passportExpireFieldContainerDiv = document.getElementById('passportExpireFieldContainer');
     const passportExpireInput = document.getElementById('passport_expire');
-    const cyrNameInput = document.getElementById('cyr_name');
-    const positionInput = document.getElementById('position');
-    // genderSelect не используется для Morpher
+    
+    // --- Получаем элементы полей ввода ---
+    const cyrNameInputElement = document.getElementById('cyr_name_input');
+    const positionInputElement = document.getElementById('position_input');
+    const genderSelect = document.getElementById('gender'); // Оставляем, если нужен для чего-то еще или для передачи в Morpher API (если API поддерживает)
 
-    if (!form || !citizenshipSelect || !foreignCitizenFieldsDiv || !latNameAutoInput || 
-        !passportExpireFieldContainerDiv || !passportExpireInput || !cyrNameInput || 
-        !positionInput) {
-        console.error("КРИТИЧЕСКАЯ ОШИБКА: Один или несколько обязательных элементов формы не найдены.");
+    if (!form || !citizenshipSelect || !foreignCitizenFieldsDiv || !latNameAutoDisplayInput || 
+        !passportExpireFieldContainerDiv || !passportExpireInput || !cyrNameInputElement || 
+        !positionInputElement || !genderSelect ) {
+        console.error("КРИТИЧЕСКАЯ ОШИБКА: Один или несколько обязательных элементов формы не найдены. Проверьте HTML ID.");
         alert("Ошибка инициализации страницы. Обратитесь к администратору.");
         return; 
     }
     
-    function toggleForeignFields() { /* ... как раньше ... */ 
+    function toggleForeignFields() {
         const isForeign = citizenshipSelect.value === 'other';
         foreignCitizenFieldsDiv.style.display = isForeign ? 'block' : 'none';
         passportExpireFieldContainerDiv.style.display = isForeign ? 'block' : 'none';
         passportExpireInput.required = isForeign;
-        if (isForeign) updateAutoLatName();
-        else {
-            latNameAutoInput.value = '';
+        if (isForeign) {
+            updateAutoLatName();
+        } else {
+            latNameAutoDisplayInput.value = '';
             passportExpireInput.value = '';
         }
     }
-    function updateAutoLatName() { /* ... как раньше ... */ 
-        if (citizenshipSelect.value === 'other' && cyrNameInput.value && typeof slug === 'function') {
+
+    function updateAutoLatName() {
+        if (citizenshipSelect.value === 'other' && cyrNameInputElement.value && typeof slug === 'function') {
             try {
-                const transliterated = slug(cyrNameInput.value.trim(), {
+                const transliterated = slug(cyrNameInputElement.value.trim(), {
                     locale: 'ru', replacement: ' ', lower: false, remove: /[*+~.()'"!:@]/g 
                 });
-                latNameAutoInput.value = transliterated.split(' ')
+                latNameAutoDisplayInput.value = transliterated.split(' ')
                     .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '').join(' ');
             } catch (e) {
                 console.error("Ошибка автоматической транслитерации:", e);
-                latNameAutoInput.value = "Ошибка транслитерации";
+                latNameAutoDisplayInput.value = "Ошибка транслитерации";
             }
         } else if (citizenshipSelect.value !== 'other') {
-            latNameAutoInput.value = '';
+            latNameAutoDisplayInput.value = '';
         }
     }
     
     async function declineWithMorpher(textToDecline) {
-        console.log(`[declineWithMorpher] Вызвана для текста: "${textToDecline}" (тип: ${typeof textToDecline})`);
+        console.log(`[declineWithMorpher] Вызвана для текста: "${textToDecline}"`);
         if (!textToDecline || typeof textToDecline !== 'string' || textToDecline.trim() === '') {
-            console.warn(`[declineWithMorpher] Пустой или некорректный текст для склонения: "${textToDecline}". Возвращаем как есть.`);
+            console.warn(`[declineWithMorpher] Пустой текст для склонения. Возвращаем как есть.`);
             return textToDecline; 
         }
-
         const trimmedText = textToDecline.trim();
         const encodedText = encodeURIComponent(trimmedText);
-        // Добавьте &token=ВАШ_ТОКЕН если он у вас есть
         const url = `https://ws3.morpher.ru/russian/declension?s=${encodedText}&format=json`;
-
         console.log(`[declineWithMorpher] Формируем URL: ${url}`);
-
         try {
             const response = await fetch(url);
-            console.log(`[declineWithMorpher] Ответ от fetch для "${trimmedText}":`, response);
-
             if (!response.ok) {
                 let errorDetail = `Статус: ${response.status}`;
                 try {
-                    const errorJson = await response.json(); // Попытка прочитать тело ошибки как JSON
-                    console.error(`[declineWithMorpher] Ошибка API Morpher (JSON):`, errorJson);
+                    const errorJson = await response.json();
                     if(errorJson && errorJson.message) errorDetail += ` - ${errorJson.message}`;
                     else if(errorJson && errorJson.code) errorDetail += ` - Код ошибки: ${errorJson.code}`;
                 } catch (e) {
-                    // Если тело ответа не JSON, читаем как текст
-                    const errorText = await response.text();
-                    console.error(`[declineWithMorpher] Ошибка API Morpher (текст):`, errorText);
-                    errorDetail += ` - ${errorText.substring(0, 100)}`; // Первые 100 символов ошибки
-                }
+                    const errorTextResponse = await response.text(); // Читаем как текст, если JSON не удался
+                    errorDetail += ` - ${errorTextResponse.substring(0,100)}`;
+                 }
                 throw new Error(`Ошибка Morpher API: ${errorDetail}`);
             }
-
             const responseData = await response.json();
             console.log(`[declineWithMorpher] JSON ответ от Morpher для "${trimmedText}":`, responseData);
-
-            if (responseData && responseData["Р"]) {
-                console.log(`[declineWithMorpher] Родительный падеж (Р) НАЙДЕН для "${trimmedText}": "${responseData["Р"]}"`);
+            if (responseData && responseData["Р"]) { // "Р" - родительный падеж
                 return responseData["Р"];
             } else {
-                console.warn(`[declineWithMorpher] Родительный падеж (Р) НЕ НАЙДЕН в ответе для "${trimmedText}". Ответ:`, responseData);
-                return trimmedText; // Возвращаем исходный, если нет нужного падежа
+                console.warn(`[declineWithMorpher] Родительный падеж (Р) НЕ НАЙДЕН для "${trimmedText}". Возвращаем исходный.`);
+                return trimmedText;
             }
         } catch (error) {
             console.error(`[declineWithMorpher] Общая ошибка при склонении "${trimmedText}":`, error);
-            return trimmedText; // Возвращаем исходный текст в случае ошибки
+            return trimmedText;
         }
     }
 
     citizenshipSelect.addEventListener('change', toggleForeignFields);
-    cyrNameInput.addEventListener('input', updateAutoLatName);
+    cyrNameInputElement.addEventListener('input', updateAutoLatName); // Обновляем имя переменной инпута
     toggleForeignFields();
 
     form.addEventListener('submit', async function (event) {
         event.preventDefault();
-        console.log("--- НАЧАЛО ОБРАБОТКИ ФОРМЫ (С MORPHER API) ---");
+        console.log("--- НАЧАЛО ОБРАБОТКИ ФОРМЫ (MORPHOR, ЦЕЛЬ: СКЛОНЕННЫЕ В data ДЛЯ DOCX) ---");
 
-        const formData = new FormData(form);
-        const data = {};
+        const formData = new FormData(form); // Используем для сбора остальных полей
+        const data = {}; // Данные для DOCX шаблона
 
-        let cyrNameRaw = cyrNameInput.value.trim();
-        let positionRaw = positionInput.value.trim();
+        // 1. Получаем ИСХОДНЫЕ значения из полей ввода
+        let cyrNameNominative = cyrNameInputElement.value.trim();     // ФИО в Именительном падеже
+        let positionNominative = positionInputElement.value.trim(); // Должность в Именительном падеже
+        // const userSelectedGender = genderSelect.value; // Пока не используем для Morpher, но можно сохранить
 
-        data.cyr_name = cyrNameRaw || ''; 
-        if (positionRaw && positionRaw.length > 0) {
-            data.position = positionRaw.charAt(0).toLowerCase() + positionRaw.slice(1);
+        console.log("[SUBMIT] Введено ФИО (И.п.):", `"${cyrNameNominative}"`);
+        console.log("[SUBMIT] Введена Должность (И.п.):", `"${positionNominative}"`);
+        
+        // --- Склонение ФИО в родительный падеж ---
+        if (cyrNameNominative) {
+            data.cyr_name = await declineWithMorpher(cyrNameNominative); // Результат для плейсхолдера {cyr_name}
+            console.log("[SUBMIT] ФИО после Morpher (Р.п.) для шаблона {cyr_name}:", `"${data.cyr_name}"`);
+        } else {
+            data.cyr_name = ''; 
+        }
+
+        // --- Склонение Должности в родительный падеж ---
+        let positionNominativeProcessed = ''; // Для передачи в Morpher (с маленькой буквы)
+        if (positionNominative && positionNominative.length > 0) {
+            positionNominativeProcessed = positionNominative.charAt(0).toLowerCase() + positionNominative.slice(1);
+        }
+        
+        if (positionNominativeProcessed) {
+            console.log("[SUBMIT] Должность для склонения (обработанная И.п.):", `"${positionNominativeProcessed}"`);
+            data.position = await declineWithMorpher(positionNominativeProcessed); // Результат для плейсхолдера {position}
+            console.log("[SUBMIT] Должность после Morpher (Р.п.) для шаблона {position}:", `"${data.position}"`);
         } else {
             data.position = '';
         }
-
-        console.log("[SUBMIT] Исходное ФИО для склонения:", `"${cyrNameRaw}"`);
-        console.log("[SUBMIT] Исходная должность для склонения (обработанная):", `"${data.position}"`);
-
-        // --- Склонение ФИО с помощью Morpher ---
-        console.log("[SUBMIT] --- Начинаем склонение ФИО через Morpher ---");
-        if (cyrNameRaw) {
-            data.cyr_name_genitive = await declineWithMorpher(cyrNameRaw);
-        } else {
-            data.cyr_name_genitive = '';
-        }
-        console.log("[SUBMIT] ФИО после Morpher (Р.п.) записано в data:", `"${data.cyr_name_genitive}"`);
-
-        // --- Склонение Должности с помощью Morpher ---
-        console.log("[SUBMIT] --- Начинаем склонение Должности через Morpher ---");
-        if (data.position) {
-            data.position_genitive = await declineWithMorpher(data.position);
-        } else {
-            data.position_genitive = '';
-        }
-        console.log("[SUBMIT] Должность после Morpher (Р.п.) записана в data:", `"${data.position_genitive}"`);
         
-        // 4. Данные для иностранного гражданина
+        // 3. Данные для иностранного гражданина (плейсхолдер {lat_name})
         data.lat_name = ''; 
-        data.passport_expire = ''; 
         if (citizenshipSelect.value === 'other') {
-            data.lat_name = latNameAutoInput.value; 
+            // Берем значение из поля, которое обновляется функцией updateAutoLatName
+            data.lat_name = latNameAutoDisplayInput.value; 
+            console.log("[SUBMIT] ФИО латиницей для шаблона {lat_name}:", `"${data.lat_name}"`);
+            
             const passportExpireRaw = passportExpireInput.value; 
             if (passportExpireRaw) {
                 try { data.passport_expire = new Date(passportExpireRaw).toLocaleDateString('ru-RU'); } 
                 catch (e) { data.passport_expire = passportExpireRaw; }
+            } else {
+                data.passport_expire = '';
             }
+        } else {
+             data.passport_expire = ''; // Убедимся, что пусто для РФ
         }
-
-        // Сбор остальных полей
-        const otherSimpleFields = ['passport_number', 'path', 'phone', 'site'];
-        otherSimpleFields.forEach(fieldName => {
+        
+        // Сбор остальных полей, которые НЕ ТРЕБУЮТ специальной обработки перед записью в data
+        // и для которых плейсхолдеры в DOCX совпадают с name атрибутами в HTML
+        const directFields = ['passport_number', 'path', 'phone', 'site', 'gender']; // gender можно тоже напрямую записать
+        directFields.forEach(fieldName => {
             data[fieldName] = formData.get(fieldName) || '';
         });
-        const formDateFields = ['birthday', 'mo_from', 'mo_to', 'work_from'];
-        formDateFields.forEach(fieldName => {
+
+        const dateFields = ['birthday', 'mo_from', 'mo_to', 'work_from']; // Имена атрибутов name
+        dateFields.forEach(fieldName => {
             const rawDate = formData.get(fieldName);
             if (rawDate) {
                 try { data[fieldName] = new Date(rawDate).toLocaleDateString('ru-RU'); } 
@@ -163,12 +162,13 @@ document.addEventListener('DOMContentLoaded', function () {
             } else { data[fieldName] = ''; }
         });
         
-        // 5. Расчеты длительностей
+        // Расчеты длительностей
         const moDurationInputVal = formData.get('mo_duration');
         if (moDurationInputVal) { data.mo_duration = moDurationInputVal; } 
-        else if (formData.get('mo_from') && formData.get('mo_to')) {
+        else if (data.mo_from && data.mo_to) { // Используем уже отформатированные даты из data
             try {
-                const moFromDate = new Date(formData.get('mo_from'));
+                // Для расчета разницы нужны объекты Date, а не строки
+                const moFromDate = new Date(formData.get('mo_from')); // Берем из formData для точности расчета
                 const moToDate = new Date(formData.get('mo_to'));
                 if (!isNaN(moFromDate) && !isNaN(moToDate) && moToDate >= moFromDate) {
                     data.mo_duration = Math.ceil((moToDate - moFromDate) / (1000 * 60 * 60 * 24)) + 1;
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (e) { data.mo_duration = "[ош.расч.]"; }
         } else { data.mo_duration = ''; }
 
-        if (formData.get('mo_from') && formData.get('work_from')) {
+        if (data.mo_from && data.work_from) {
             try {
                 const moFromDate = new Date(formData.get('mo_from'));
                 const workFromDate = new Date(formData.get('work_from'));
@@ -188,55 +188,17 @@ document.addEventListener('DOMContentLoaded', function () {
         
         data.submissionDate = new Date().toLocaleDateString('ru-RU');
 
-        console.log("Финальные данные для шаблона (перед генерацией документа):", data);
+        console.log("Финальные данные для шаблона DOCX:", data);
 
         const templateUrl = '/docs/templates/mo_itr.docx';
-        let outputNamePart = data.cyr_name ? (data.cyr_name.split(' ')[0] || "сотрудника") : "документ";
+        // Имя файла можно формировать из исходного именительного падежа ФИО
+        let outputNamePart = cyrNameNominative ? (cyrNameNominative.split(' ')[0] || "сотрудника") : "документ";
         const outputFilename = `МО_${outputNamePart}_${data.submissionDate.replace(/\./g, '-')}.docx`;
 
         loadAndProcessDocx(templateUrl, data, outputFilename);
     });
 });
 
-function loadAndProcessDocx(templateUrl, data, outputFilename) { /* ... без изменений ... */ 
-    if (typeof PizZip === 'undefined') {
-        alert("Ошибка: Библиотека PizZip не загружена."); console.error("PizZip is not defined"); return;
-    }
-    if (typeof docxtemplater === 'undefined') {
-        alert("Ошибка: Библиотека docxtemplater не загружена."); console.error("docxtemplater is not defined"); return;
-    }
-    if (typeof saveAs === 'undefined') {
-        alert("Ошибка: Библиотека FileSaver.js не загружена."); console.error("saveAs is not defined"); return;
-    }
-
-    fetch(templateUrl)
-        .then(response => {
-            if (!response.ok) throw new Error(`Ошибка сети при загрузке шаблона: ${response.status} ${response.statusText}`);
-            return response.arrayBuffer();
-        })
-        .then(content => {
-            const zip = new PizZip(content);
-            const doc = new docxtemplater(zip, {
-                paragraphLoop: true,
-                linebreaks: true,
-                nullGetter: function() { return ""; }
-            });
-            doc.setData(data);
-            try {
-                doc.render();
-            } catch (error) {
-                console.error("Ошибка рендеринга Docxtemplater:", error.message, error.stack, error.properties);
-                alert(`Ошибка при генерации документа: ${error.message}\nПодробности в консоли (F12).`);
-                throw error;
-            }
-            const out = doc.getZip().generate({
-                type: 'blob',
-                mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            });
-            saveAs(out, outputFilename);
-        })
-        .catch(error => {
-            console.error('Общая ошибка в loadAndProcessDocx:', error);
-            alert(`Не удалось загрузить или обработать шаблон: ${error.message}\nПодробности в консоли (F12).`);
-        });
-}
+function loadAndProcessDocx(templateUrl, data, outputFilename) { /* ... без изменений ... */ }
+// Убедитесь, что функции toggleForeignFields, updateAutoLatName и loadAndProcessDocx полностью скопированы из предыдущих версий.
+// И в loadAndProcessDocx проверки на PizZip, docxtemplater, saveAs.
