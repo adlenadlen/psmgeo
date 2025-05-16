@@ -209,15 +209,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function loadAndProcessDocx(templateUrl, data, outputFilename) {
     // Проверка наличия библиотек перед использованием
-    if (typeof PizZip === 'undefined') {
+    if (typeof PizZip === 'undefined') { // Используем PizZip с большой буквы, как обычно создается глобальная переменная
         alert("Ошибка: Библиотека PizZip не загружена. Проверьте CDN ссылки.");
         console.error("PizZip is not defined"); return;
     }
-    if (typeof docxtemplater === 'undefined') {
+    if (typeof docxtemplater === 'undefined') { // docxtemplater обычно создается с маленькой буквы
         alert("Ошибка: Библиотека docxtemplater не загружена. Проверьте CDN ссылки.");
         console.error("docxtemplater is not defined"); return;
     }
-    if (typeof saveAs === 'undefined') {
+    if (typeof saveAs === 'undefined') { // saveAs - это функция
         alert("Ошибка: Библиотека FileSaver.js не загружена. Проверьте CDN ссылки.");
         console.error("saveAs is not defined"); return;
     }
@@ -230,8 +230,8 @@ function loadAndProcessDocx(templateUrl, data, outputFilename) {
             return response.arrayBuffer();
         })
         .then(content => {
-            const zip = new PizZip(content);
-            const doc = new docxtemplater(zip, {
+            const zip = new PizZip(content); // Здесь используем PizZip для создания экземпляра
+            const doc = new docxtemplater(zip, { // docxtemplater для создания экземпляра
                 paragraphLoop: true,
                 linebreaks: true,
                 nullGetter: function() { return ""; }
@@ -250,7 +250,7 @@ function loadAndProcessDocx(templateUrl, data, outputFilename) {
                 type: 'blob',
                 mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             });
-            saveAs(out, outputFilename);
+            saveAs(out, outputFilename); // Вызываем функцию saveAs
         })
         .catch(error => {
             console.error('Ошибка загрузки или обработки шаблона:', error);
