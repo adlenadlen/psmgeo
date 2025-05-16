@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 latNameAutoInput.value = transliterated
                     .split(' ')
-                    .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '') // Обработка пустых слов после split
+                    .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '')
                     .join(' ');
             } catch (e) {
                 console.error("Ошибка автоматической транслитерации:", e);
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
     citizenshipSelect.addEventListener('change', toggleForeignFields);
     cyrNameInput.addEventListener('input', updateAutoLatName);
 
-    toggleForeignFields(); // Инициализация при загрузке
+    toggleForeignFields();
 
     form.addEventListener('submit', function (event) {
         event.preventDefault();
@@ -82,82 +82,71 @@ document.addEventListener('DOMContentLoaded', function () {
         let positionRaw = formData.get('position').trim();
         const gender = formData.get('gender'); 
 
-        data.cyr_name = cyrNameRaw || '';
+        data.cyr_name = cyrNameRaw || ''; // Именительный падеж
         if (positionRaw && positionRaw.length > 0) {
             data.position = positionRaw.charAt(0).toLowerCase() + positionRaw.slice(1);
         } else {
             data.position = '';
         }
 
-        // Отладка и использование Petrovich
         console.log("--- Отладка Petrovich ---");
         console.log("Исходное ФИО:", cyrNameRaw);
-        console.log("Исходная должность:", positionRaw);
+        console.log("Исходная должность:", data.position); // Используем уже обработанную должность
         console.log("Выбранный пол:", gender);
 
-        if (typeof Petrovich !== 'undefined') {
-            console.log("Библиотека Petrovich найдена.");
-            const kasus = Petrovich.CASES; // GENITIVE, DATIVE, ACCUSATIVE, INSTRUMENTAL, PREPOSITIONAL
+        if (typeof petrovich === 'function') { // Проверяем, что petrovich - это функция
+            console.log("Функция petrovich найдена.");
 
             // Склонение ФИО
             if (cyrNameRaw && gender) {
-                const nameParts = cyrNameRaw.split(/\s+/); // Разделяем по пробелам
-                const pConfig = {
-                    gender: gender, // 'male' или 'female'
-                    firstName: nameParts[1] || '', // Имя
-                    lastName: nameParts[0] || '',  // Фамилия
-                    middleName: nameParts[2] || '' // Отчество
+                const nameParts = cyrNameRaw.split(/\s+/);
+                const personDataForPetrovich = {
+                    gender: gender,
+                    first: nameParts[1] || '',  // Имя
+                    last: nameParts[0] || '',   // Фамилия
+                    middle: nameParts[2] || '' // Отчество
                 };
-                console.log("Конфигурация для Petrovich (ФИО):", pConfig);
+                // Если отчество есть, пол можно не указывать, petrovich его определит
+                if (personDataForPetrovich.middle) {
+                    delete personDataForPetrovich.gender; 
+                }
+
+
+                console.log("Данные для petrovich(ФИО):", personDataForPetrovich);
                 try {
-                    const petrovichPerson = new Petrovich(pConfig);
-                    data.cyr_name_genitive = petrovichPerson.getFullName(kasus.GENITIVE);
-                    console.log("Petrovich результат (ФИО, родительный):", data.cyr_name_genitive);
-                    if (data.cyr_name_genitive === cyrNameRaw && cyrNameRaw !== "") { // Простая проверка, что что-то изменилось
-                        console.warn("Petrovich НЕ склонил ФИО. Проверьте данные и правила библиотеки. Имя:", cyrNameRaw, "Конфиг:", pConfig);
+                    const declinedPerson = petrovich(personDataForPetrovich, 'genitive'); // Родительный падеж
+                    console.log("Petrovich результат (объект ФИО):", declinedPerson);
+                    // Собираем полное ФИО из склоненных частей
+                    data.cyr_name_genitive = [declinedPerson.last, declinedPerson.first, declinedPerson.middle]
+                                              .filter(Boolean) // Убираем пустые части (если нет отчества)
+                                              .join(' ');
+                    console.log("Petrovich результат (ФИО, родительный, строка):", data.cyr_name_genitive);
+
+                    if (data.cyr_name_genitive.toLowerCase() === cyrNameRaw.toLowerCase() && cyrNameRaw !== "") {
+                         console.warn("Petrovich возможно НЕ склонил ФИО. Имя:", cyrNameRaw, "Результат:", data.cyr_name_genitive);
                     }
                 } catch (e) {
-                    console.error("Ошибка при вызове Petrovich для ФИО:", e, pConfig);
+                    console.error("Ошибка при вызове petrovich для ФИО:", e, personDataForPetrovich);
                     data.cyr_name_genitive = cyrNameRaw; // fallback
                 }
             } else {
                 data.cyr_name_genitive = cyrNameRaw || '';
-                if (!cyrNameRaw) console.log("ФИО для склонения не предоставлено.");
-                if (!gender) console.log("Пол для склонения ФИО не выбран.");
             }
 
             // Склонение Должности
-            // ВНИМАНИЕ: Petrovich-JS 0.2.1 (с CDN jsdelivr) НЕ УМЕЕТ склонять произвольные существительные/должности.
-            // Этот блок оставлен как пример, если бы он умел, или если вы подключите другую библиотеку.
-            // Сейчас он просто скопирует значение.
-            if (positionRaw && gender) {
-                 console.log("Попытка обработки должности (Petrovich-JS не склоняет должности):", data.position);
-                 // data.position_genitive = data.position; // Просто копируем, т.к. petrovich-js не склоняет должности
-                 // Если бы у вас была библиотека, которая склоняет должности, вы бы использовали ее здесь.
-                 // Например, если бы petrovich.Job существовал и работал как в старых версиях:
-                 // try {
-                 //     const job = new Petrovich.Job(data.position, gender); // Примерный вызов, НЕ РАБОТАЕТ с petrovich-js 0.2.1
-                 //     data.position_genitive = job.toString(kasus.GENITIVE);
-                 //     console.log("Petrovich результат (должность, родительный):", data.position_genitive);
-                 // } catch (e) {
-                 //     console.error("Ошибка при склонении должности:", e);
-                 //     data.position_genitive = data.position;
-                 // }
-                 data.position_genitive = data.position; // ЗАГЛУШКА
-                 if (data.position_genitive === data.position && data.position !== "") {
-                     console.warn("Должность НЕ склонена (Petrovich-JS не поддерживает / или используется заглушка). Должность:", data.position);
-                 }
-            } else {
-                data.position_genitive = data.position;
-                 if (!positionRaw) console.log("Должность для склонения не предоставлена.");
-            }
-
+            // ВНИМАНИЕ: Оригинальный petrovich-js НЕ УМЕЕТ склонять произвольные должности.
+            // Он работает только с ФИО (first, last, middle).
+            // Если вам нужно склонять должности, вам нужна другая библиотека или решение.
+            data.position_genitive = data.position; // ЗАГЛУШКА: оставляем должность в именительном падеже
+            console.warn("Petrovich-JS (оригинальная версия) не склоняет должности. Плейсхолдер {position_genitive} будет равен {position}. Должность:", data.position);
+            
         } else {
-            console.warn("Библиотека Petrovich не найдена или не загружена. Склонение не будет выполнено.");
+            console.warn("Функция petrovich не найдена или не загружена. Склонение не будет выполнено.");
             data.cyr_name_genitive = cyrNameRaw || '';
             data.position_genitive = data.position;
         }
         console.log("--- Конец отладки Petrovich ---");
+
 
         // 4. Данные для иностранного гражданина
         data.lat_name = '';
