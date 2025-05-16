@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width,initial-scale=1" name="viewport">
+    <title>Заявление на Межвахтовый Отдых (ИТР)</title>
+    <meta content="Форма заявления на межвахтовый отдых для ИТР в системе psmgeo." name="description">
+    <link href="/style.css" rel="stylesheet"> <!-- Предполагаем, что style.css в корне проекта -->
+    <link href="/favicon.png" rel="icon" type="image/png"> <!-- Предполагаем, что favicon.png в корне проекта -->
+</head>
+<body>
+    <div class="page-container">
+        <nav aria-label="breadcrumb" class="breadcrumbs">
+            <ol>
+                <li><a href="/">Главная</a></li>
+                <li><a href="/docs/">Заявления</a></li> <!-- Предполагается, что /docs/index.html - список заявлений -->
+                <li aria-current="page" class="current">Межвахтовый отдых (ИТР)</li>
+            </ol>
+        </nav>
+        <h1>Заявление на Межвахтовый отдых (ИТР)</h1>
+
+        <form id="moItrForm">
+            <section>
+                <h2>Персональные данные</h2>
+                <div class="vertical">
+                    <label for="gender">Пол (для корректного склонения):</label>
+                    <select id="gender" name="gender" required style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
+                        <option value="">Выберите пол</option>
+                        <option value="male">Мужской</option>
+                        <option value="female">Женский</option>
+                        <!-- <option value="androgynous">Не указан</option> --><!-- Petrovich поддерживает, но возможно не нужно -->
+                    </select>
+
+                    <label for="cyr_name">ФИО (кириллица, полностью, например: Иванов Иван Иванович):</label>
+                    <input type="text" id="cyr_name" name="cyr_name" placeholder="Иванов Иван Иванович" required style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
+                    
+                    <!-- Поле для латиницы можно скрыть и заполнять JS, либо оставить для ручного ввода/коррекции -->
+                    <label for="lat_name_input">ФИО (латиница, если отличается от авто-транслитерации):</label>
+                    <input type="text" id="lat_name_input" name="lat_name_input" placeholder="Ivanov Ivan Ivanovich" style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
+
+                    <label for="birthday">Дата рождения:</label>
+                    <input type="date" id="birthday" name="birthday" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+                    
+                    <label for="phone">Номер телефона:</label>
+                    <input type="tel" id="phone" name="phone" placeholder="+79001234567" style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
+                </div>
+            </section>
+
+            <section>
+                <h2>Паспортные данные</h2>
+                <div class="vertical">
+                    <label for="passport_number">Серия и номер паспорта:</label>
+                    <input type="text" id="passport_number" name="passport_number" placeholder="0000 123456" required style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
+
+                    <label for="passport_expire">Срок действия паспорта (для иностранных граждан):</label>
+                    <input type="date" id="passport_expire" name="passport_expire" style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+                </div>
+            </section>
+            
+            <section>
+                <h2>Данные по работе и отдыху</h2>
+                <div class="vertical">
+                    <label for="position">Должность (в именительном падеже, например: Инженер-геодезист):</label>
+                    <input type="text" id="position" name="position" placeholder="Инженер-геодезист" required style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
+                    
+                    <label for="site">Участок:</label>
+                    <input type="text" id="site" name="site" placeholder="Участок №1" style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
+
+                    <label for="work_from">Дата заезда на текущую вахту:</label>
+                    <input type="date" id="work_from" name="work_from" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+                    
+                    <label for="mo_from">Дата начала межвахтового отдыха (МО):</label>
+                    <input type="date" id="mo_from" name="mo_from" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+
+                    <label for="mo_to">Дата конца межвахтового отдыха (МО):</label>
+                    <input type="date" id="mo_to" name="mo_to" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+                    
+                    <label for="mo_duration">Продолжительность МО (дней, если отличается от авторасчета):</label>
+                    <input type="number" id="mo_duration" name="mo_duration" placeholder="Например: 14" style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+                    
+                    <label for="path">Маршрут следования к месту отдыха (Город):</label>
+                    <input type="text" id="path" name="path" placeholder="Город" style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
+                </div>
+            </section>
+
+            <button type="submit" class="b" style="margin-top: 20px;">Сгенерировать и скачать DOCX</button>
+        </form>
+    </div>
+
+    <!-- Подключение ВСЕХ библиотек ЛОКАЛЬНО -->
+    <script src="/docs/lib/petrovich.min.js"></script>
+    <script src="/docs/lib/transliterate.min.js"></script>
+    <script src="/docs/lib/pizzip.min.js"></script>
+    <script src="/docs/lib/docxtemplater.min.js"></script> <!-- или .js, если нет .min.js версии -->
+    <script src="/docs/lib/FileSaver.min.js"></script>
+    
+    <!-- Ваш основной скрипт -->
+    <script src="/docs/mo_itr.js"></script>
+</body>
+</html>
