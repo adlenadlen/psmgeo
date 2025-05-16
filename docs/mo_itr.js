@@ -7,17 +7,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const passportExpireInput = document.getElementById('passport_expire');
     const cyrNameInput = document.getElementById('cyr_name');
     const positionInput = document.getElementById('position');
-    const genderSelect = document.getElementById('gender');
+    // genderSelect нам больше не нужен для склонения через Morpher, но может быть нужен для других целей
 
     if (!form || !citizenshipSelect || !foreignCitizenFieldsDiv || !latNameAutoInput || 
         !passportExpireFieldContainerDiv || !passportExpireInput || !cyrNameInput || 
-        !positionInput || !genderSelect) {
+        !positionInput) { // Убрал genderSelect из этой проверки, т.к. он не критичен для Morpher
         console.error("КРИТИЧЕСКАЯ ОШИБКА: Один или несколько обязательных элементов формы не найдены.");
         alert("Ошибка инициализации страницы. Обратитесь к администратору.");
         return; 
     }
     
-    function toggleForeignFields() { /* ... без изменений ... */ 
+    function toggleForeignFields() { /* ... без изменений, как в предыдущей версии ... */ 
         const isForeign = citizenshipSelect.value === 'other';
         foreignCitizenFieldsDiv.style.display = isForeign ? 'block' : 'none';
         passportExpireFieldContainerDiv.style.display = isForeign ? 'block' : 'none';
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
             passportExpireInput.value = '';
         }
     }
-    function updateAutoLatName() { /* ... без изменений ... */ 
+    function updateAutoLatName() { /* ... без изменений, как в предыдущей версии ... */ 
         if (citizenshipSelect.value === 'other' && cyrNameInput.value && typeof slug === 'function') {
             try {
                 const transliterated = slug(cyrNameInput.value.trim(), {
@@ -44,37 +44,70 @@ document.addEventListener('DOMContentLoaded', function () {
             latNameAutoInput.value = '';
         }
     }
-    function declinePositionToGenitiveMale(position) { /* ... без изменений ... */ 
-        if (!position) return '';
-        position = position.trim().toLowerCase(); 
-        if (position.endsWith('ер') || position.endsWith('ор') || position.endsWith('ель') || position.endsWith('арь')) return position + 'а';
-        else if (position.endsWith('ист')) return position + 'а';
-        else if (position.endsWith('ик')) return position.slice(0, -2) + 'ика';
-        else if (position.endsWith('аг') || position.endsWith('ог')) return position.slice(0, -2) + 'ога';
-        else if (position.endsWith('ец')) return position.slice(0, -2) + 'ца';
-        console.warn(`Для должности "${position}" не найдено правило склонения. Возвращено исходное.`);
-        return position; 
+    
+    // --- Функция для склонения через Morpher API ---
+    async function declineWithMorpher(textToDecline, isFullName = false) {
+        if (!textToDecline || textToDecline.trim() === '') {
+            return textToDecline; // Возвращаем исходный текст, если он пустой
+        }
+        // Для ФИО Morpher рекомендует передавать части отдельно, если возможно,
+        // или использовать флаг name=true. Но для простоты пока передаем всю строку.
+        // Вы можете добавить токен, если зарегистрируетесь: &token=ВАШ_ТОКЕН
+        const encodedText = encodeURIComponent(textToDecline.trim());
+        const url = `https://ws3.morpher.ru/russian/declension?s=${encodedText}&format=json`;
+
+        console.log(`[Morpher] Запрос для "${textToDecline}": ${url}`);
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                let errorText = `Ошибка Morpher API: ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData && errorData.message) {
+                       errorText += ` - ${errorData.message}`;
+                    } else if (errorData && errorData.code) {
+                       // Коды ошибок Morpher: https://morpher.ru/ws3/russian/#error-codes
+                       // 5 - Превышен лимит на число запросов в сутки.
+                       // 6 - Превышен лимит на суммарную длину для операций деления на слоги и прописи чисел и денежных единиц.
+                       // 4 - Неверный формат параметра s или слишком много слов в параметре s.
+                       // и т.д.
+                       errorText += ` (код ${errorData.code})`;
+                    }
+                } catch (e) { /* не удалось распарсить JSON ошибки */ }
+                console.error(errorText);
+                // alert(errorText); // Можно показывать пользователю, если нужно
+                return textToDecline; // Возвращаем исходный текст в случае ошибки API
+            }
+            const data = await response.json();
+            console.log(`[Morpher] Ответ для "${textToDecline}":`, data);
+            if (data && data["Р"]) { // "Р" - ключ для родительного падежа в JSON ответе
+                return data["Р"];
+            } else {
+                console.warn(`[Morpher] Родительный падеж (Р) не найден в ответе для "${textToDecline}". Ответ:`, data);
+                return textToDecline; // Возвращаем исходный, если нет нужного падежа
+            }
+        } catch (error) {
+            console.error(`[Morpher] Сетевая ошибка или ошибка парсинга для "${textToDecline}":`, error);
+            // alert("Сетевая ошибка при попытке склонения текста.");
+            return textToDecline; // Возвращаем исходный текст в случае сетевой ошибки
+        }
     }
 
     citizenshipSelect.addEventListener('change', toggleForeignFields);
     cyrNameInput.addEventListener('input', updateAutoLatName);
     toggleForeignFields();
 
-    form.addEventListener('submit', function (event) {
+    form.addEventListener('submit', async function (event) { // Делаем обработчик асинхронным
         event.preventDefault();
-        console.log("--- НАЧАЛО ОБРАБОТКИ ФОРМЫ (С ДАННЫМИ ИЗ ФОРМЫ) ---");
+        console.log("--- НАЧАЛО ОБРАБОТКИ ФОРМЫ (С MORPHER API) ---");
 
-        const formData = new FormData(form); // Используем для других полей
+        const formData = new FormData(form);
         const data = {};
 
-        // Получаем значения для ФИО, должности, пола НАПРЯМУЮ из элементов
         let cyrNameRaw = cyrNameInput.value.trim();
         let positionRaw = positionInput.value.trim();
-        const genderForFIO = genderSelect.value; 
-
-        console.log("[ИЗ ФОРМЫ] Исходное ФИО (сырое):", `"${cyrNameRaw}"`); // В кавычках, чтобы видеть пробелы
-        console.log("[ИЗ ФОРМЫ] Исходная должность (сырая):", `"${positionRaw}"`);
-        console.log("[ИЗ ФОРМЫ] Выбранный пол для ФИО:", `"${genderForFIO}"`);
+        // const genderForFIO = genderSelect.value; // Пол больше не нужен для Morpher
 
         data.cyr_name = cyrNameRaw || ''; 
         if (positionRaw && positionRaw.length > 0) {
@@ -82,90 +115,29 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             data.position = '';
         }
-        console.log("[ИЗ ФОРМЫ] Должность (обработанная, И.п.):", `"${data.position}"`);
 
+        console.log("[SUBMIT] Исходное ФИО:", cyrNameRaw);
+        console.log("[SUBMIT] Исходная должность (обработанная):", data.position);
 
-        if (typeof petrovich !== 'function') {
-            console.error("КРИТИЧЕСКАЯ ОШИБКА: Функция petrovich НЕ НАЙДЕНА!");
-            alert("Ошибка: Библиотека для склонения ФИО не загружена.");
-            data.cyr_name_genitive = cyrNameRaw || '';
-            data.position_genitive = data.position; 
+        // --- Склонение ФИО с помощью Morpher ---
+        if (cyrNameRaw) {
+            data.cyr_name_genitive = await declineWithMorpher(cyrNameRaw, true); // true - указываем, что это ФИО
+            console.log("[SUBMIT] ФИО после Morpher (Р.п.):", data.cyr_name_genitive);
         } else {
-            console.log("[ИЗ ФОРМЫ] Функция petrovich найдена.");
-
-            // Склонение ФИО
-            if (cyrNameRaw && genderForFIO) {
-                const nameParts = cyrNameRaw.split(/\s+/).filter(part => part.length > 0); // Разделяем и убираем пустые строки от лишних пробелов
-                
-                console.log("[ИЗ ФОРМЫ] Разобранные части ФИО (nameParts):", nameParts, `(Количество: ${nameParts.length})`);
-
-                // Проверяем, что у нас есть хотя бы фамилия и имя для склонения
-                if (nameParts.length >= 1) { // Минимум 1 слово для попытки (хотя бы фамилия)
-                    const personToDecline = {
-                        last: nameParts[0] || '',     // Первое слово - Фамилия
-                        first: nameParts[1] || '',    // Второе слово - Имя
-                        middle: nameParts[2] || '',   // Третье слово (если есть) - Отчество
-                        gender: genderForFIO         // Всегда передаем пол, выбранный пользователем
-                    };
-
-                    // Дополнительная отладка для случая с одним или двумя словами в ФИО
-                    if (nameParts.length === 1) {
-                        console.warn("[ИЗ ФОРМЫ] Введено только одно слово в ФИО. Petrovich будет пытаться склонить его как Фамилию (last).");
-                        personToDecline.first = ''; // Убедимся, что first и middle пустые, если только одно слово
-                        personToDecline.middle = '';
-                    } else if (nameParts.length === 2) {
-                         console.warn("[ИЗ ФОРМЫ] Введено два слова в ФИО. Petrovich будет пытаться склонить их как Фамилию (last) и Имя (first).");
-                         personToDecline.middle = ''; // Убедимся, что middle пустое
-                    }
-                    
-                    console.log("[ИЗ ФОРМЫ] ОБЪЕКТ ДЛЯ PETROVICH (ФИО):", JSON.stringify(personToDecline));
-                    try {
-                        const declinedPersonObject = petrovich(personToDecline, 'genitive'); 
-                        console.log("[ИЗ ФОРМЫ] PETROVICH ВЕРНУЛ (объект ФИО):", JSON.stringify(declinedPersonObject));
-                        
-                        data.cyr_name_genitive = [
-                            declinedPersonObject.last, 
-                            declinedPersonObject.first, 
-                            declinedPersonObject.middle
-                        ].filter(Boolean).join(' ');
-
-                        console.log("[ИЗ ФОРМЫ] РЕЗУЛЬТАТ СКЛОНЕНИЯ (ФИО, родительный, строка):", `"${data.cyr_name_genitive}"`);
-
-                        if (data.cyr_name_genitive.toLowerCase() === cyrNameRaw.toLowerCase() && cyrNameRaw !== "") {
-                             console.warn("[ИЗ ФОРМЫ] ПРЕДУПРЕЖДЕНИЕ: Petrovich вернул ФИО без изменений.");
-                        } else if (data.cyr_name_genitive && data.cyr_name_genitive !== cyrNameRaw) { // Добавил проверку, что не пусто и не равно исходному
-                             console.log("[ИЗ ФОРМЫ] ИНФО: Склонение ФИО прошло успешно!");
-                        } else if (!data.cyr_name_genitive && cyrNameRaw) {
-                             console.warn("[ИЗ ФОРМЫ] ПРЕДУПРЕЖДЕНИЕ: Petrovich вернул пустой результат для ФИО.");
-                        }
-
-
-                    } catch (e) {
-                        console.error("[ИЗ ФОРМЫ] ОШИБКА ВНУТРИ PETROVICH при склонении ФИО:", e, "\nС данными:", personToDecline);
-                        data.cyr_name_genitive = cyrNameRaw; 
-                    }
-                } else { // Если cyrNameRaw не пустой, но nameParts пустой (например, ввели одни пробелы)
-                    console.warn("[ИЗ ФОРМЫ] ФИО состоит из пробелов или не удалось разобрать на части. Склонение не выполняется.");
-                    data.cyr_name_genitive = cyrNameRaw || '';
-                }
-            } else { // Если cyrNameRaw или genderForFIO пустые
-                data.cyr_name_genitive = cyrNameRaw || '';
-                if (!cyrNameRaw) console.log("[ИЗ ФОРМЫ] ФИО для склонения не предоставлено.");
-                // genderForFIO всегда будет, т.к. select имеет default
-            }
+            data.cyr_name_genitive = '';
         }
 
-        // Склонение Должности
+        // --- Склонение Должности с помощью Morpher ---
+        // Morpher должен уметь склонять должности, но они склоняются как обычные фразы.
+        // Для должностей мужского рода он должен дать правильный результат.
         if (data.position) {
-            data.position_genitive = declinePositionToGenitiveMale(data.position);
-            console.log("[ИЗ ФОРМЫ] РЕЗУЛЬТАТ СКЛОНЕНИЯ (должность, Р.п. м.р.):", `"${data.position_genitive}"`);
+            data.position_genitive = await declineWithMorpher(data.position);
+            console.log("[SUBMIT] Должность после Morpher (Р.п.):", data.position_genitive);
         } else {
             data.position_genitive = '';
         }
         
-        // ... (остальной код: сбор других полей formData, данные для иностранного гражданина, расчеты длительностей, submissionDate, генерация документа) ...
-        // Этот код я не менял, он должен быть ниже
-        // 4. Данные для иностранного гражданина
+        // 4. Данные для иностранного гражданина (логика остается)
         data.lat_name = ''; 
         data.passport_expire = ''; 
         if (citizenshipSelect.value === 'other') {
@@ -176,22 +148,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 catch (e) { data.passport_expire = passportExpireRaw; }
             }
         }
-        // 5. Расчеты длительностей и submissionDate
+
+        // Сбор остальных полей
         const otherSimpleFields = ['passport_number', 'path', 'phone', 'site'];
         otherSimpleFields.forEach(fieldName => {
-            if (!(fieldName in data)) { data[fieldName] = formData.get(fieldName) || ''; }
+            data[fieldName] = formData.get(fieldName) || '';
         });
-        const formDateFields = ['birthday', 'mo_from', 'mo_to', 'work_from']; // Переименовал, чтобы не конфликтовать
+        const formDateFields = ['birthday', 'mo_from', 'mo_to', 'work_from'];
         formDateFields.forEach(fieldName => {
-            if (!(fieldName in data)) {
-                const rawDate = formData.get(fieldName);
-                if (rawDate) {
-                    try { data[fieldName] = new Date(rawDate).toLocaleDateString('ru-RU'); } 
-                    catch (e) { data[fieldName] = rawDate; }
-                } else { data[fieldName] = ''; }
-            }
+            const rawDate = formData.get(fieldName);
+            if (rawDate) {
+                try { data[fieldName] = new Date(rawDate).toLocaleDateString('ru-RU'); } 
+                catch (e) { data[fieldName] = rawDate; }
+            } else { data[fieldName] = ''; }
         });
+
+        // 5. Расчеты длительностей (логика остается)
         const moDurationInputVal = formData.get('mo_duration');
+        // ... (остальной код расчета длительностей и submissionDate, как в предыдущей версии) ...
         if (moDurationInputVal) {
             data.mo_duration = moDurationInputVal;
         } else if (formData.get('mo_from') && formData.get('mo_to')) {
@@ -218,17 +192,19 @@ document.addEventListener('DOMContentLoaded', function () {
         
         data.submissionDate = new Date().toLocaleDateString('ru-RU');
 
+
         console.log("Финальные данные для шаблона (перед генерацией документа):", data);
 
         const templateUrl = '/docs/templates/mo_itr.docx';
         let outputNamePart = data.cyr_name ? (data.cyr_name.split(' ')[0] || "сотрудника") : "документ";
         const outputFilename = `МО_${outputNamePart}_${data.submissionDate.replace(/\./g, '-')}.docx`;
 
-        loadAndProcessDocx(templateUrl, data, outputFilename);
+        loadAndProcessDocx(templateUrl, data, outputFilename); // Эта функция не меняется
     });
 });
 
-function loadAndProcessDocx(templateUrl, data, outputFilename) { /* ... без изменений ... */ 
+// Функция loadAndProcessDocx остается той же, как в предыдущем ответе
+function loadAndProcessDocx(templateUrl, data, outputFilename) {
     if (typeof PizZip === 'undefined') {
         alert("Ошибка: Библиотека PizZip не загружена."); console.error("PizZip is not defined"); return;
     }
