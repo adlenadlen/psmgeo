@@ -1,5 +1,64 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // ... (код toggleForeignFields, updateAutoLatName, declinePositionToGenitiveMale - без изменений, оставляю их как есть) ...
+    // --- Получение всех необходимых элементов DOM ---
+    const form = document.getElementById('moItrForm');
+    const citizenshipSelect = document.getElementById('citizenship');
+    const foreignCitizenFieldsDiv = document.getElementById('foreignCitizenFields'); // Для ФИО латиницей
+    const latNameAutoInput = document.getElementById('lat_name_auto');
+    const passportExpireFieldContainerDiv = document.getElementById('passportExpireFieldContainer'); // Для срока паспорта
+    const passportExpireInput = document.getElementById('passport_expire');
+    const cyrNameInput = document.getElementById('cyr_name');
+    const positionInput = document.getElementById('position');
+    const genderSelect = document.getElementById('gender');
+
+    // --- Проверка наличия всех ключевых элементов ---
+    if (!form || !citizenshipSelect || !foreignCitizenFieldsDiv || !latNameAutoInput || 
+        !passportExpireFieldContainerDiv || !passportExpireInput || !cyrNameInput || 
+        !positionInput || !genderSelect) {
+        console.error("КРИТИЧЕСКАЯ ОШИБКА: Один или несколько обязательных элементов формы не найдены. Проверьте HTML ID элементов и их наличие.");
+        alert("Ошибка инициализации страницы. Некоторые элементы формы не найдены. Обратитесь к администратору.");
+        return; // Прерываем выполнение, если что-то важное отсутствует
+    }
+    
+    // --- Функция для отображения/скрытия полей иностранного гражданина ---
+    function toggleForeignFields() {
+        const isForeign = citizenshipSelect.value === 'other';
+        
+        foreignCitizenFieldsDiv.style.display = isForeign ? 'block' : 'none';
+        passportExpireFieldContainerDiv.style.display = isForeign ? 'block' : 'none'; // Показываем/скрываем контейнер срока паспорта
+        
+        passportExpireInput.required = isForeign;
+
+        if (isForeign) {
+            updateAutoLatName(); // Обновляем транслит, если нужно
+        } else {
+            latNameAutoInput.value = '';
+            passportExpireInput.value = ''; // Очищаем поле срока паспорта
+        }
+    }
+
+    // --- Функция для автоматической транслитерации ---
+    function updateAutoLatName() {
+        if (citizenshipSelect.value === 'other' && cyrNameInput.value && typeof slug === 'function') {
+            try {
+                const transliterated = slug(cyrNameInput.value.trim(), {
+                    locale: 'ru',
+                    replacement: ' ',
+                    lower: false,
+                    remove: /[*+~.()'"!:@]/g 
+                });
+                latNameAutoInput.value = transliterated
+                    .split(' ')
+                    .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '')
+                    .join(' ');
+            } catch (e) {
+                console.error("Ошибка автоматической транслитерации:", e);
+                latNameAutoInput.value = "Ошибка транслитерации";
+            }
+        } else if (citizenshipSelect.value !== 'other') {
+            latNameAutoInput.value = '';
+        }
+    }
+
     // --- Упрощенная функция склонения должностей (мужской род, родительный падеж) ---
     function declinePositionToGenitiveMale(position) {
         if (!position) return '';
@@ -13,39 +72,25 @@ document.addEventListener('DOMContentLoaded', function () {
         return position; 
     }
 
-    const form = document.getElementById('moItrForm');
-    // ... (остальные const для элементов формы) ...
-    const cyrNameInput = document.getElementById('cyr_name');
-    const positionInput = document.getElementById('position'); // Добавим для явного получения значения
-    const genderSelect = document.getElementById('gender');     // Добавим для явного получения значения
+    // --- Привязка обработчиков событий ---
+    citizenshipSelect.addEventListener('change', toggleForeignFields);
+    cyrNameInput.addEventListener('input', updateAutoLatName);
 
+    // --- Инициализация состояния полей при загрузке страницы ---
+    toggleForeignFields(); 
 
-    if (!form || !cyrNameInput || !positionInput || !genderSelect /* ... и другие проверки ... */) {
-        console.error("Один из ключевых элементов формы (ФИО, должность, пол) не найден!");
-        return;
-    }
-
+    // --- Обработчик отправки формы ---
     form.addEventListener('submit', function (event) {
         event.preventDefault();
         console.log("--- НАЧАЛО ОБРАБОТКИ ФОРМЫ ---");
 
-        const formData = new FormData(form);
+        const formData = new FormData(form); // FormData все еще полезна для других полей
         const data = {};
 
-        // 1. Получаем значения для ФИО, должности, пола НАПРЯМУЮ из элементов
-        // Это чтобы исключить проблемы с formData.get, если они есть
-        let cyrNameRawFromElement = cyrNameInput.value.trim();
-        let positionRawFromElement = positionInput.value.trim();
-        let genderFromElement = genderSelect.value;
-
-        console.log("[ПРОВЕРКА ИЗ ЭЛЕМЕНТОВ] Исходное ФИО:", cyrNameRawFromElement, `(Тип: ${typeof cyrNameRawFromElement})`);
-        console.log("[ПРОВЕРКА ИЗ ЭЛЕМЕНТОВ] Исходная должность:", positionRawFromElement, `(Тип: ${typeof positionRawFromElement})`);
-        console.log("[ПРОВЕРКА ИЗ ЭЛЕМЕНТОВ] Выбранный пол:", genderFromElement, `(Тип: ${typeof genderFromElement})`);
-
-        // Используем значения, полученные напрямую
-        let cyrNameRaw = cyrNameRawFromElement;
-        let positionRaw = positionRawFromElement;
-        const genderForFIO = genderFromElement; 
+        // Получаем значения для ФИО, должности, пола напрямую, чтобы быть уверенными
+        let cyrNameRaw = cyrNameInput.value.trim();
+        let positionRaw = positionInput.value.trim();
+        const genderForFIO = genderSelect.value; 
 
         data.cyr_name = cyrNameRaw || ''; 
         if (positionRaw && positionRaw.length > 0) {
@@ -54,38 +99,35 @@ document.addEventListener('DOMContentLoaded', function () {
             data.position = '';
         }
 
-        console.log("--- Отладка Petrovich и склонения должности ---");
-        console.log("Подготовленное ФИО для обработки:", cyrNameRaw);
-        console.log("Подготовленная должность (И.п.) для обработки:", data.position);
-        console.log("Подготовленный пол для ФИО:", genderForFIO);
+        console.log("[ОТПРАВКА ФОРМЫ] Исходное ФИО:", cyrNameRaw);
+        console.log("[ОТПРАВКА ФОРМЫ] Исходная должность (обработанная):", data.position);
+        console.log("[ОТПРАВКА ФОРМЫ] Выбранный пол для ФИО:", genderForFIO);
 
         // Проверка доступности функции petrovich
         if (typeof petrovich !== 'function') {
-            console.error("КРИТИЧЕСКАЯ ОШИБКА: Функция petrovich НЕ НАЙДЕНА в глобальной области видимости!");
-            alert("Ошибка: Библиотека для склонения ФИО не загружена. Обратитесь к администратору.");
-            // Заполняем значения по умолчанию, чтобы не было ошибок дальше
-            data.cyr_name_genitive = cyrNameRaw || '';
-            data.position_genitive = data.position;
+            console.error("КРИТИЧЕСКАЯ ОШИБКА: Функция petrovich НЕ НАЙДЕНА!");
+            alert("Ошибка: Библиотека для склонения ФИО не загружена. Генерация невозможна.");
+            data.cyr_name_genitive = cyrNameRaw || ''; // fallback
+            data.position_genitive = data.position;   // fallback
         } else {
-            console.log("Функция petrovich найдена и доступна.");
+            console.log("Функция petrovich найдена.");
 
             // Склонение ФИО
             if (cyrNameRaw && genderForFIO) {
                 const nameParts = cyrNameRaw.split(/\s+/);
-                if (nameParts.length < 2) { // Простая проверка, что есть хотя бы Фамилия и Имя
-                    console.warn("ФИО введено не полностью (меньше 2 слов). Качество склонения может быть низким.");
-                }
                 const personDataForPetrovich = {
                     gender: genderForFIO,
                     first: nameParts[1] || '',
                     last: nameParts[0] || '',
                     middle: nameParts[2] || ''
                 };
-                // Если есть отчество, можно позволить petrovich определить пол
-                // Но мы уже имеем genderForFIO от пользователя, так что передаем его.
-                // if (personDataForPetrovich.middle && !genderForFIO) { delete personDataForPetrovich.gender; }
+                if (personDataForPetrovich.middle && !personDataForPetrovich.gender) { // Если пол не указан, но есть отчество
+                    // petrovich сам определит пол, можно удалить gender
+                    // delete personDataForPetrovich.gender;
+                    // Но т.к. у нас genderForFIO всегда есть, это условие можно упростить или убрать
+                }
                 
-                console.log("ОБЪЕКТ ДЛЯ PETROVICH (ФИО):", JSON.stringify(personDataForPetrovich)); // Выводим как строку для точности
+                console.log("ОБЪЕКТ ДЛЯ PETROVICH (ФИО):", JSON.stringify(personDataForPetrovich));
                 try {
                     const declinedPerson = petrovich(personDataForPetrovich, 'genitive'); 
                     console.log("PETROVICH ВЕРНУЛ (объект ФИО):", JSON.stringify(declinedPerson));
@@ -95,44 +137,59 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.log("РЕЗУЛЬТАТ СКЛОНЕНИЯ (ФИО, родительный, строка):", data.cyr_name_genitive);
 
                     if (data.cyr_name_genitive.toLowerCase() === cyrNameRaw.toLowerCase() && cyrNameRaw !== "") {
-                         console.warn("ПРЕДУПРЕЖДЕНИЕ: Petrovich вернул ФИО без изменений. Проверьте введенные данные и правила библиотеки.");
+                         console.warn("ПРЕДУПРЕЖДЕНИЕ: Petrovich вернул ФИО без изменений.");
                     }
                 } catch (e) {
-                    console.error("ОШИБКА ВНУТРИ PETROVICH при склонении ФИО:", e, "С данными:", personDataForPetrovich);
+                    console.error("ОШИБКА ВНУТРИ PETROVICH при склонении ФИО:", e, "\nС данными:", personDataForPetrovich);
                     data.cyr_name_genitive = cyrNameRaw;
                 }
             } else {
                 data.cyr_name_genitive = cyrNameRaw || '';
-                if (!cyrNameRaw) console.log("ФИО для склонения не предоставлено.");
             }
         }
 
         // Склонение Должности (используем нашу упрощенную функцию)
-        console.log("--- Обработка должности ---");
         if (data.position) {
-            console.log("Должность для declinePositionToGenitiveMale:", data.position);
             let declinedPos = declinePositionToGenitiveMale(data.position);
             data.position_genitive = declinedPos;
             console.log("РЕЗУЛЬТАТ СКЛОНЕНИЯ (должность, Р.п. м.р.):", data.position_genitive);
              if (data.position_genitive.toLowerCase() === data.position.toLowerCase() && data.position !== "") {
-                 console.warn("ПРЕДУПРЕЖДЕНИЕ: Функция declinePositionToGenitiveMale вернула должность без изменений (или правило не найдено).");
+                 console.warn("ПРЕДУПРЕЖДЕНИЕ: declinePositionToGenitiveMale вернула должность без изменений.");
              }
         } else {
             data.position_genitive = '';
-            console.log("Должность не предоставлена, склонение не выполняется.");
         }
-        console.log("--- Конец отладки ---");
+        console.log("--- КОНЕЦ ОБРАБОТКИ СКЛОНЕНИЙ ---");
 
-        // ... (остальной код: данные для иностранного гражданина, расчеты длительностей, submissionDate) ...
-        // Этот блок я не менял, он был ниже
+        // Сбор остальных полей из FormData (если они не были обработаны выше)
+        // Важно: если имена в formData совпадают с уже созданными ключами в data, они НЕ будут перезаписаны этим циклом,
+        // так как мы заполняем data. Но лучше избегать дублирования.
+        const otherSimpleFields = ['passport_number', 'path', 'phone', 'site']; // Поля, которые не требуют спец. обработки
+        otherSimpleFields.forEach(fieldName => {
+            if (!(fieldName in data)) { // Только если еще не добавлено
+                 data[fieldName] = formData.get(fieldName) || '';
+            }
+        });
+        
+        const dateFieldsToFormat = ['birthday', 'mo_from', 'mo_to', 'work_from'];
+        dateFieldsToFormat.forEach(fieldName => {
+            if (!(fieldName in data)) { // Только если еще не добавлено
+                const rawDate = formData.get(fieldName);
+                if (rawDate) {
+                    try {
+                        data[fieldName] = new Date(rawDate).toLocaleDateString('ru-RU');
+                    } catch (e) { data[fieldName] = rawDate; }
+                } else { data[fieldName] = ''; }
+            }
+        });
+
+
         // 4. Данные для иностранного гражданина
-        data.lat_name = '';
-        data.passport_expire = '';
-        // Убедитесь, что latNameAutoInput объявлен в начале файла
-        const latNameAutoInputValue = latNameAutoInput ? latNameAutoInput.value : '';
-        if (formData.get('citizenship') === 'other') {
-            data.lat_name = latNameAutoInputValue; // Используем значение из input, которое обновляется динамически
-            const passportExpireRaw = formData.get('passport_expire');
+        data.lat_name = ''; // Убедимся, что по умолчанию пусто
+        data.passport_expire = ''; // Убедимся, что по умолчанию пусто
+        if (citizenshipSelect.value === 'other') { // Проверяем текущее значение селекта
+            data.lat_name = latNameAutoInput.value; // Берем актуальное значение
+            const passportExpireRaw = passportExpireInput.value; // Берем актуальное значение
             if (passportExpireRaw) {
                 try {
                     data.passport_expire = new Date(passportExpireRaw).toLocaleDateString('ru-RU');
@@ -141,9 +198,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // 5. Расчеты длительностей
-        const moDurationInput = formData.get('mo_duration');
-        if (moDurationInput) {
-            data.mo_duration = moDurationInput;
+        const moDurationInputVal = formData.get('mo_duration'); // Используем formData, т.к. это отдельное поле
+        if (moDurationInputVal) {
+            data.mo_duration = moDurationInputVal;
         } else if (formData.get('mo_from') && formData.get('mo_to')) {
             try {
                 const moFromDate = new Date(formData.get('mo_from'));
@@ -168,7 +225,6 @@ document.addEventListener('DOMContentLoaded', function () {
         
         data.submissionDate = new Date().toLocaleDateString('ru-RU');
 
-
         console.log("Финальные данные для шаблона:", data);
 
         const templateUrl = '/docs/templates/mo_itr.docx';
@@ -177,56 +233,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         loadAndProcessDocx(templateUrl, data, outputFilename);
     });
-
-    // Код toggleForeignFields и updateAutoLatName остается здесь (я их убрал из этого блока для краткости, но они должны быть)
-    function toggleForeignFields() {
-        const isForeign = citizenshipSelect.value === 'other';
-        foreignCitizenFieldsDiv.style.display = isForeign ? 'block' : 'none';
-        passportExpireFieldContainerDiv.style.display = isForeign ? 'block' : 'none';
-        passportExpireInput.required = isForeign;
-
-        if (isForeign) {
-            updateAutoLatName();
-        } else {
-            if (latNameAutoInput) latNameAutoInput.value = ''; // Проверка на null
-            if (passportExpireInput) passportExpireInput.value = ''; // Проверка на null
-        }
-    }
-
-    function updateAutoLatName() {
-        if (citizenshipSelect.value === 'other' && cyrNameInput && cyrNameInput.value && typeof slug === 'function') {
-            try {
-                const transliterated = slug(cyrNameInput.value.trim(), {
-                    locale: 'ru',
-                    replacement: ' ',
-                    lower: false,
-                    remove: /[*+~.()'"!:@]/g 
-                });
-                if (latNameAutoInput) { // Проверка на null
-                    latNameAutoInput.value = transliterated
-                        .split(' ')
-                        .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '')
-                        .join(' ');
-                }
-            } catch (e) {
-                console.error("Ошибка автоматической транслитерации:", e);
-                if (latNameAutoInput) latNameAutoInput.value = "Ошибка транслитерации";
-            }
-        } else if (citizenshipSelect.value !== 'other') {
-            if (latNameAutoInput) latNameAutoInput.value = ''; // Проверка на null
-        }
-    }
-    // Инициализация
-    if (citizenshipSelect) citizenshipSelect.addEventListener('change', toggleForeignFields);
-    if (cyrNameInput) cyrNameInput.addEventListener('input', updateAutoLatName);
-    if (form) toggleForeignFields(); // Вызываем один раз при загрузке
-
-
 }); // Конец DOMContentLoaded
 
-// Функция loadAndProcessDocx остается без изменений
+// Функция loadAndProcessDocx остается той же, как в предыдущем ответе
 function loadAndProcessDocx(templateUrl, data, outputFilename) {
-    // ... (код этой функции)
     if (typeof PizZip === 'undefined') {
         alert("Ошибка: Библиотека PizZip не загружена."); console.error("PizZip is not defined"); return;
     }
