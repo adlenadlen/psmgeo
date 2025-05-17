@@ -1,37 +1,56 @@
 document.addEventListener('DOMContentLoaded', function () {
+    console.log("DOM fully loaded and parsed. Initializing script...");
+
     const form = document.getElementById('moItrForm');
+    console.log('Element #moItrForm:', form);
+
     const citizenshipSelect = document.getElementById('citizenship');
-    // const foreignCitizenFieldsDiv = document.getElementById('foreignCitizenFields'); // Удалено, т.к. элемента нет в HTML
+    console.log('Element #citizenship:', citizenshipSelect);
+
     const passportExpireFieldContainerDiv = document.getElementById('passportExpireFieldContainer');
+    console.log('Element #passportExpireFieldContainer:', passportExpireFieldContainerDiv);
+
     const passportExpireInput = document.getElementById('passport_expire');
+    console.log('Element #passport_expire:', passportExpireInput);
     
     const cyrNameInputElement = document.getElementById('cyr_name_input');
+    console.log('Element #cyr_name_input:', cyrNameInputElement);
+
     const positionInputElement = document.getElementById('position_input');
+    console.log('Element #position_input:', positionInputElement);
+
     const genderSelect = document.getElementById('gender');
+    console.log('Element #gender:', genderSelect);
 
     const ticketOption1Checkbox = document.getElementById('ticket_option_1');
-    const ticketOption2Checkbox = document.getElementById('ticket_option_2');
-    const ticketOption3Checkbox = document.getElementById('ticket_option_3');
-    const ticketOption4Checkbox = document.getElementById('ticket_option_4');
+    console.log('Element #ticket_option_1:', ticketOption1Checkbox);
 
-    // Обновляем проверку обязательных элементов, убираем foreignCitizenFieldsDiv
+    const ticketOption2Checkbox = document.getElementById('ticket_option_2');
+    console.log('Element #ticket_option_2:', ticketOption2Checkbox);
+
+    const ticketOption3Checkbox = document.getElementById('ticket_option_3');
+    console.log('Element #ticket_option_3:', ticketOption3Checkbox);
+
+    const ticketOption4Checkbox = document.getElementById('ticket_option_4');
+    console.log('Element #ticket_option_4:', ticketOption4Checkbox);
+
     if (!form || !citizenshipSelect || 
         !passportExpireFieldContainerDiv || !passportExpireInput || !cyrNameInputElement || 
         !positionInputElement || !genderSelect || !ticketOption1Checkbox || 
         !ticketOption2Checkbox || !ticketOption3Checkbox || !ticketOption4Checkbox) {
-        console.error("КРИТИЧЕСКАЯ ОШИБКА: Один или несколько обязательных элементов формы не найдены. Проверьте HTML ID.");
-        alert("Ошибка инициализации страницы. Обратитесь к администратору.");
+        console.error("КРИТИЧЕСКАЯ ОШИБКА: Один или несколько обязательных элементов формы не найдены. Проверьте HTML ID в вашем файле mo_itr.html и сравните с console.log выше.");
+        alert("КРИТИЧЕСКАЯ ОШИБКА: Один или несколько обязательных элементов формы не найдены. Проверьте HTML ID. См. консоль разработчика (F12) для деталей.");
         return; 
     }
+    console.log("All required elements found successfully.");
     
     function toggleForeignFields() {
         const isForeign = citizenshipSelect.value === 'other';
-        // foreignCitizenFieldsDiv.style.display = isForeign ? 'block' : 'none'; // Удалено, т.к. элемента нет
         passportExpireFieldContainerDiv.style.display = isForeign ? 'block' : 'none';
         passportExpireInput.required = isForeign;
         
         if (!isForeign) {
-            passportExpireInput.value = ''; // Очищаем значение, если не иностранный гражданин
+            passportExpireInput.value = '';
         }
     }
 
@@ -52,9 +71,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     citizenshipSelect.addEventListener('change', toggleForeignFields);
-    toggleForeignFields(); // Первоначальный вызов для установки правильного состояния
+    toggleForeignFields();
 
     async function declineWithMorpher(textToDecline) {
+        // ... (код функции declineWithMorpher без изменений) ...
         console.log(`[declineWithMorpher] Вызвана для текста: "${textToDecline}"`);
         if (!textToDecline || typeof textToDecline !== 'string' || textToDecline.trim() === '') {
             console.warn(`[declineWithMorpher] Пустой текст для склонения. Возвращаем как есть.`);
@@ -220,12 +240,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function loadAndProcessDocx(url, data, fileName) {
+        // ... (код функции loadAndProcessDocx без изменений, с Docxtemplater с большой 'D') ...
         if (typeof PizZip === 'undefined') {
             console.error('Библиотека PizZip не загружена.');
             alert('Ошибка: Библиотека PizZip для генерации документа не найдена.');
             return;
         }
-        if (typeof Docxtemplater === 'undefined') { // Проверка с большой 'D'
+        if (typeof Docxtemplater === 'undefined') { 
             console.error('Библиотека Docxtemplater не загружена.');
             alert('Ошибка: Библиотека Docxtemplater для генерации документа не найдена.');
             return;
@@ -258,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 let doc;
                 try {
-                    doc = new Docxtemplater(zip, { // Создание экземпляра с большой 'D'
+                    doc = new Docxtemplater(zip, { 
                         paragraphLoop: true,
                         linebreaks: true,
                         nullGetter: function(part) { 
