@@ -208,9 +208,9 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Ошибка: Библиотека PizZip для генерации документа не найдена.');
             return;
         }
-        if (typeof Docxtemplater === 'undefined') {
-            console.error('Библиотека Docxtemplater не загружена.');
-            alert('Ошибка: Библиотека Docxtemplater для генерации документа не найдена.');
+        if (typeof docxtemplater === 'undefined') {
+            console.error('Библиотека docxtemplater не загружена.');
+            alert('Ошибка: Библиотека docxtemplater для генерации документа не найдена.');
             return;
         }
         if (typeof saveAs === 'undefined') { 
@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 let doc;
                 try {
-                    doc = new Docxtemplater(zip, {
+                    doc = new docxtemplater(zip, {
                         paragraphLoop: true,
                         linebreaks: true,
                         nullGetter: function(part) { 
@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     });
                 } catch (e) {
-                    console.error("Ошибка при инициализации Docxtemplater:", e);
+                    console.error("Ошибка при инициализации docxtemplater:", e);
                     alert("Ошибка подготовки генератора документа.");
                     throw e;
                 }
@@ -263,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     doc.render();
                 } catch (error) {
                     if (error.properties && error.properties.errors) {
-                        console.error('Ошибка рендеринга шаблона Docxtemplater:', JSON.stringify(error.properties.errors));
+                        console.error('Ошибка рендеринга шаблона docxtemplater:', JSON.stringify(error.properties.errors));
                         const unrenderedTag = error.properties.errors[0]?.properties?.part?.value;
                         if (unrenderedTag) {
                              alert(`Ошибка при заполнении шаблона. Возможно, не найден тег: {${unrenderedTag}}.`);
@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function () {
                              alert('Ошибка при заполнении шаблона. Проверьте консоль.');
                         }
                     } else {
-                        console.error('Общая ошибка рендеринга Docxtemplater:', error);
+                        console.error('Общая ошибка рендеринга docxtemplater:', error);
                         alert('Ошибка при заполнении шаблона.');
                     }
                     throw error;
