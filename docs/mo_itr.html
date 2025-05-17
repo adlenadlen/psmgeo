@@ -1,107 +1,122 @@
 <!doctype html>
 <html lang="ru">
+
 <head>
-    <meta charset="UTF-8">
-    <meta content="width=device-width,initial-scale=1" name="viewport">
-    <title>Заявление на Межвахтовый Отдых (ИТР)</title>
-    <meta content="Форма заявления на межвахтовый отдых для ИТР в системе psmgeo." name="description">
-    <link href="/style.css" rel="stylesheet">
-    <link href="/favicon.png" rel="icon" type="image/png">
-    <style>
-        .hidden-fields { display: none; }
-    </style>
+	<meta charset="UTF-8">
+	<meta content="width=device-width,initial-scale=1" name="viewport">
+	<title>Заявление на Межвахтовый Отдых (ИТР)</title>
+	<meta content="Форма заявления на межвахтовый отдых для ИТР в системе psmgeo." name="description">
+	<link href="/style.css" rel="stylesheet">
+	<link href="/favicon.png" rel="icon" type="image/png">
+	<style>
+		.hidden-fields {
+			display: none;
+		}
+
+		.checkbox-group label {
+			display: block;
+			margin-bottom: 5px;
+		}
+
+		/* Стиль для чекбоксов */
+	</style>
 </head>
+
 <body>
-    <div class="page-container">
-        <nav aria-label="breadcrumb" class="breadcrumbs">
-            <ol>
-                <li><a href="/">Главная</a></li>
-                <li><a href="/docs/">Заявления</a></li>
-                <li aria-current="page" class="current">Межвахтовый отдых (ИТР)</li>
-            </ol>
-        </nav>
-        <h1>Заявление на Межвахтовый отдых (ИТР)</h1>
+	<div class="page-container">
+		<nav aria-label="breadcrumb" class="breadcrumbs">
+			<ol>
+				<li><a href="/">Главная</a></li>
+				<li><a href="/docs/">Заявления</a></li>
+				<li aria-current="page" class="current">Межвахтовый отдых (ИТР)</li>
+			</ol>
+		</nav>
+		<h1>Межвахтовый отдых (ИТР)</h1>
 
-        <form id="moItrForm">
-            <section>
-                <h2>Персональные данные</h2>
-                <div class="vertical">
-                    <!-- Пол нужен для информации, но не для склонения через Morpher напрямую -->
-                    <label for="gender">Пол:</label>
-                    <select id="gender" name="gender" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
-                        <option value="male" selected>Мужской</option>
-                        <option value="female">Женский</option>
-                    </select>
+		<form id="moItrForm">
+			<section>
+				<h2>Персональные данные</h2>
+				<div class="vertical">
+					<label for="gender">Пол:</label>
+					<select id="gender" name="gender" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+						<option value="male" selected>Мужской</option>
+						<option value="female">Женский</option>
+					</select>
 
-                    <label for="citizenship">Гражданство:</label>
-                    <select id="citizenship" name="citizenship" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
-                        <option value="RU" selected>РФ</option>
-                        <option value="other">Иное</option>
-                    </select>
+					<label for="citizenship">Гражданство:</label>
+					<select id="citizenship" name="citizenship" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+						<option value="RU" selected>РФ</option>
+						<option value="other">Иное</option>
+					</select>
 
-                    <label for="cyr_name_input">ФИО (кириллица, Именительный падеж, например: Иванов Иван Иванович):</label>
-                    <input type="text" id="cyr_name_input" name="cyr_name_input" placeholder="Иванов Иван Иванович" required style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
-                    
-                    <div id="foreignCitizenFields" class="hidden-fields">
-                        <label for="lat_name_auto_display">ФИО (латиница, автоматически для шаблона {lat_name}):</label>
-                        <input type="text" id="lat_name_auto_display" name="lat_name_auto_display" readonly style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px; background-color: #f0f0f0;">
-                    </div>
+					<label for="cyr_name_input">ФИО:</label>
+					<input type="text" id="cyr_name_input" name="cyr_name_input" placeholder="Иванов Иван Иванович" required style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
 
-                    <label for="birthday">Дата рождения:</label>
-                    <input type="date" id="birthday" name="birthday" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
-                    
-                    <label for="phone">Номер телефона:</label>
-                    <input type="tel" id="phone" name="phone" placeholder="+79001234567" style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
-                </div>
-            </section>
+					<label for="birthday">Дата рождения:</label>
+					<input type="date" id="birthday" name="birthday" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
 
-            <section>
-                <h2>Паспортные данные</h2>
-                <div class="vertical">
-                    <label for="passport_number">Серия и номер паспорта:</label>
-                    <input type="text" id="passport_number" name="passport_number" placeholder="0000 123456" required style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
+					<label for="phone">Номер телефона:</label>
+					<input type="tel" id="phone" name="phone" placeholder="+79001234567" style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
+					<label for="passport_number">Серия и номер паспорта:</label>
+					<input type="text" id="passport_number" name="passport_number" placeholder="0000 123456" required style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
 
-                    <div id="passportExpireFieldContainer" class="hidden-fields">
-                        <label for="passport_expire">Срок действия паспорта (для иностранных граждан):</label>
-                        <input type="date" id="passport_expire" name="passport_expire" style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
-                    </div>
-                </div>
-            </section>
-            
-            <section>
-                <h2>Данные по работе и отдыху</h2>
-                <div class="vertical">
-                    <label for="position_input">Должность (Именительный падеж, например: Инженер-геодезист):</label>
-                    <input type="text" id="position_input" name="position_input" placeholder="Инженер-геодезист" required style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
-                    
-                    <label for="site">Участок:</label>
-                    <input type="text" id="site" name="site" placeholder="Участок №1" style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
+					<div id="passportExpireFieldContainer" class="hidden-fields">
+						<label for="passport_expire">Срок действия паспорта:</label>
+						<input type="date" id="passport_expire" name="passport_expire" style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+					</div>
+				</div>
+			</section>
 
-                    <label for="work_from">Дата заезда на текущую вахту:</label>
-                    <input type="date" id="work_from" name="work_from" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
-                    
-                    <label for="mo_from">Дата начала межвахтового отдыха (МО):</label>
-                    <input type="date" id="mo_from" name="mo_from" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+			<section>
+				<h2>Данные по работе и отдыху</h2>
+				<div class="vertical">
+					<label for="position_input">Геодезист:</label>
+					<input type="text" id="position_input" name="position_input" placeholder="Инженер-геодезист" required style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
 
-                    <label for="mo_to">Дата конца межвахтового отдыха (МО):</label>
-                    <input type="date" id="mo_to" name="mo_to" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
-                    
-                    <label for="mo_duration">Продолжительность МО (дней, если отличается от авторасчета):</label>
-                    <input type="number" id="mo_duration" name="mo_duration" placeholder="Например: 14" min="1" style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
-                    
-                    <label for="path">Маршрут следования к месту отдыха (Город):</label>
-                    <input type="text" id="path" name="path" placeholder="Город" style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
-                </div>
-            </section>
+					<label for="site">Участок:</label>
+					<input type="text" id="site" name="site" placeholder="гр.70 ИЗП" style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
 
-            <button type="submit" class="b" style="margin-top: 20px;">Сгенерировать и скачать DOCX</button>
-        </form>
-    </div>
+					<label for="work_from">Дата начала вахты:</label>
+					<input type="date" id="work_from" name="work_from" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
 
-    <script src="/docs/lib/pizzip.min.js"></script>
-    <script src="/docs/lib/docxtemplater.min.js"></script>
-    <script src="/docs/lib/FileSaver.min.js"></script>
-    <script src="/docs/lib/transliterate.js"></script>
-    <script src="/docs/mo_itr.js"></script>
+					<label for="mo_from">Дата начала межвахтового отдыха:</label>
+					<input type="date" id="mo_from" name="mo_from" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+
+					<label for="mo_to">Дата конца межвахтового отдыха:</label>
+					<input type="date" id="mo_to" name="mo_to" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
+
+					<label for="path">Маршрут (туда и обратно):</label>
+					<input type="text" id="path" name="path" placeholder="Усть-Кут—Алматы—Усть-Кут" style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
+				</div>
+				<div class="vertical checkbox-group">
+					<label>
+						<input type="checkbox" id="ticket_option_1" name="ticket_option_1">
+						Самостоятельно, компенсация - согласно регламенту по приобретению билетов
+					</label>
+					<label>
+						<input type="checkbox" id="ticket_option_2" name="ticket_option_2">
+						Силами организации по маршруту, указанному в данном заявлении
+					</label>
+					<label>
+						<input type="checkbox" id="ticket_option_3" name="ticket_option_3">
+						С возмещением стоимости в кассу предприятия
+					</label>
+					<label>
+						<input type="checkbox" id="ticket_option_4" name="ticket_option_4">
+						С удержанием из з/п, согласно регламенту по приобретению билетов
+					</label>
+				</div>
+			</section>
+
+			<button type="submit" class="b" style="margin-top: 20px;">Сгенерировать и скачать DOCX</button>
+		</form>
+	</div>
+
+	<script src="/docs/lib/pizzip.min.js"></script>
+	<script src="/docs/lib/docxtemplater.min.js"></script>
+	<script src="/docs/lib/FileSaver.min.js"></script>
+	<script src="/docs/lib/transliterate.js"></script>
+	<script src="/docs/mo_itr.js"></script>
 </body>
+
 </html>
