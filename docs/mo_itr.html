@@ -52,6 +52,12 @@
 					<label for="cyr_name_input">ФИО:</label>
 					<input type="text" id="cyr_name_input" name="cyr_name_input" placeholder="Иванов Иван Иванович" required style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
 
+					/* */
+					<div id="latNameFieldContainer" class="hidden-fields">
+						<label for="lat_name_input">ФИО (латиница):</label>
+						<input type="text" id="lat_name_input" name="lat_name_input" placeholder="Ivanov Ivan Ivanovich" style="width: 100%; max-width: 400px; padding: 8px; margin-bottom: 10px;">
+					</div>
+
 					<label for="birthday">Дата рождения:</label>
 					<input type="date" id="birthday" name="birthday" required style="width: 100%; max-width: 200px; padding: 8px; margin-bottom: 10px;">
 
@@ -115,7 +121,7 @@
 	<script src="/docs/lib/pizzip.min.js"></script>
 	<script src="/docs/lib/docxtemplater.min.js"></script>
 	<script src="/docs/lib/FileSaver.min.js"></script>
-	<script src="/docs/lib/transliterate.js"></script>
+	<script src="/docs/lib/transliterate.js"></script> {/* Убедитесь, что этот файл содержит функцию transliterateName */}
 	<script src="/docs/mo_itr.js"></script>
 </body>
 
