@@ -1,48 +1,27 @@
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("DOM fully loaded and parsed. Initializing script...");
+    console.log("DOM fully loaded. Initializing script...");
 
     const form = document.getElementById('moItrForm');
-    console.log('Element #moItrForm:', form);
-
     const citizenshipSelect = document.getElementById('citizenship');
-    console.log('Element #citizenship:', citizenshipSelect);
-
     const passportExpireFieldContainerDiv = document.getElementById('passportExpireFieldContainer');
-    console.log('Element #passportExpireFieldContainer:', passportExpireFieldContainerDiv);
-
     const passportExpireInput = document.getElementById('passport_expire');
-    console.log('Element #passport_expire:', passportExpireInput);
-    
     const cyrNameInputElement = document.getElementById('cyr_name_input');
-    console.log('Element #cyr_name_input:', cyrNameInputElement);
-
     const positionInputElement = document.getElementById('position_input');
-    console.log('Element #position_input:', positionInputElement);
-
     const genderSelect = document.getElementById('gender');
-    console.log('Element #gender:', genderSelect);
-
     const ticketOption1Checkbox = document.getElementById('ticket_option_1');
-    console.log('Element #ticket_option_1:', ticketOption1Checkbox);
-
     const ticketOption2Checkbox = document.getElementById('ticket_option_2');
-    console.log('Element #ticket_option_2:', ticketOption2Checkbox);
-
     const ticketOption3Checkbox = document.getElementById('ticket_option_3');
-    console.log('Element #ticket_option_3:', ticketOption3Checkbox);
-
     const ticketOption4Checkbox = document.getElementById('ticket_option_4');
-    console.log('Element #ticket_option_4:', ticketOption4Checkbox);
 
     if (!form || !citizenshipSelect || 
         !passportExpireFieldContainerDiv || !passportExpireInput || !cyrNameInputElement || 
         !positionInputElement || !genderSelect || !ticketOption1Checkbox || 
         !ticketOption2Checkbox || !ticketOption3Checkbox || !ticketOption4Checkbox) {
-        console.error("КРИТИЧЕСКАЯ ОШИБКА: Один или несколько обязательных элементов формы не найдены. Проверьте HTML ID в вашем файле mo_itr.html и сравните с console.log выше.");
+        console.error("КРИТИЧЕСКАЯ ОШИБКА: Один или несколько обязательных элементов формы не найдены. Проверьте HTML ID.");
         alert("КРИТИЧЕСКАЯ ОШИБКА: Один или несколько обязательных элементов формы не найдены. Проверьте HTML ID. См. консоль разработчика (F12) для деталей.");
         return; 
     }
-    console.log("All required elements found successfully.");
+    console.log("All required form elements found successfully.");
     
     function toggleForeignFields() {
         const isForeign = citizenshipSelect.value === 'other';
@@ -218,7 +197,10 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (e) { data.work_duration = "[ош.расч.]"; }
         }
         
+        // Дата подачи заявления (сегодняшняя дата)
         data.submissionDate = new Date().toLocaleDateString('ru-RU');
+        // Плейсхолдер {today} - также сегодняшняя дата
+        data.today = data.submissionDate; // Можно так, если формат тот же
 
         data.tick_1 = ticketOption1Checkbox.checked ? "🗹" : "□";
         data.tick_2 = ticketOption2Checkbox.checked ? "🗹" : "□";
