@@ -6,6 +6,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const passportExpireFieldContainerDiv = document.getElementById('passportExpireFieldContainer');
     const passportExpireInput = document.getElementById('passport_expire');
     const cyrNameInputElement = document.getElementById('cyr_name_input');
+    
+    // --- НОВЫЕ ЭЛЕМЕНТЫ ---
+    const latNameFieldContainerDiv = document.getElementById('latNameFieldContainer');
+    const latNameInputElement = document.getElementById('lat_name_input');
+    // --- КОНЕЦ НОВЫХ ЭЛЕМЕНТОВ ---
+
     const positionInputElement = document.getElementById('position_input');
     const genderSelect = document.getElementById('gender');
     const ticketOption1Checkbox = document.getElementById('ticket_option_1');
@@ -13,30 +19,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const ticketOption3Checkbox = document.getElementById('ticket_option_3');
     const ticketOption4Checkbox = document.getElementById('ticket_option_4');
 
-    if (!form || !citizenshipSelect || 
-        !passportExpireFieldContainerDiv || !passportExpireInput || !cyrNameInputElement || 
-        !positionInputElement || !genderSelect || !ticketOption1Checkbox || 
-        !ticketOption2Checkbox || !ticketOption3Checkbox || !ticketOption4Checkbox) {
+    if (!form || !citizenshipSelect || !passportExpireFieldContainerDiv || 
+        !passportExpireInput || !cyrNameInputElement || !latNameFieldContainerDiv || // Добавлена проверка
+        !latNameInputElement || !positionInputElement || !genderSelect ||  // Добавлена проверка
+        !ticketOption1Checkbox || !ticketOption2Checkbox || 
+        !ticketOption3Checkbox || !ticketOption4Checkbox) {
         console.error("КРИТИЧЕСКАЯ ОШИБКА: Один или несколько обязательных элементов формы не найдены. Проверьте HTML ID.");
         alert("КРИТИЧЕСКАЯ ОШИБКА: Один или несколько обязательных элементов формы не найдены. Проверьте HTML ID. См. консоль разработчика (F12) для деталей.");
         return; 
     }
     console.log("All required form elements found successfully.");
     
-    function toggleForeignFields() {
-        const isForeign = citizenshipSelect.value === 'other';
-        passportExpireFieldContainerDiv.style.display = isForeign ? 'block' : 'none';
-        passportExpireInput.required = isForeign;
-        
-        if (!isForeign) {
-            passportExpireInput.value = '';
-        }
-    }
-
     function performTransliteration(nameToTransliterate) {
         if (typeof transliterateName !== 'function') { 
             console.warn("Функция transliterateName (для транслитерации) не найдена. Проверьте файл /docs/lib/transliterate.js");
-            return "Ошибка: транслитерация недоступна";
+            return "Ошибка: транслитерация недоступна"; // Возвращаем сообщение об ошибке, чтобы было видно в поле
         }
         try {
             let transliterated = transliterateName(nameToTransliterate);
@@ -45,12 +42,54 @@ document.addEventListener('DOMContentLoaded', function () {
                 .join(' ');
         } catch (e) {
             console.error("Ошибка автоматической транслитерации:", e);
-            return "Ошибка транслитерации";
+            return "Ошибка транслитерации"; // Возвращаем сообщение об ошибке
         }
+    }
+
+    function toggleForeignFields() {
+        const isForeign = citizenshipSelect.value === 'other';
+        
+        // Поля для паспорта иностранца
+        passportExpireFieldContainerDiv.style.display = isForeign ? 'block' : 'none';
+        passportExpireInput.required = isForeign;
+        if (!isForeign) {
+            passportExpireInput.value = '';
+        }
+
+        // --- НОВАЯ ЛОГИКА ДЛЯ ПОЛЯ ФИО (ЛАТИНИЦА) ---
+        latNameFieldContainerDiv.style.display = isForeign ? 'block' : 'none';
+        // latNameInputElement.required = isForeign; // Раскомментируйте, если поле должно быть обязательным для иностранцев
+
+        if (isForeign) {
+            const cyrNameValue = cyrNameInputElement.value.trim();
+            if (cyrNameValue && typeof transliterateName === 'function') { // Проверяем наличие функции
+                 latNameInputElement.value = performTransliteration(cyrNameValue);
+            } else if (cyrNameValue) { // Если функции нет, но имя введено
+                 latNameInputElement.value = "Функция транслитерации не найдена";
+            } else {
+                 latNameInputElement.value = ''; // Очищаем, если кириллическое имя пустое
+            }
+        } else {
+            latNameInputElement.value = ''; // Очищаем при выборе гражданства РФ
+        }
+        // --- КОНЕЦ НОВОЙ ЛОГИКИ ---
     }
     
     citizenshipSelect.addEventListener('change', toggleForeignFields);
-    toggleForeignFields();
+    
+    // --- НОВЫЙ СЛУШАТЕЛЬ ДЛЯ АВТОМАТИЧЕСКОЙ ТРАНСЛИТЕРАЦИИ ПРИ ВВОДЕ КИРИЛЛИЧЕСКОГО ФИО ---
+    cyrNameInputElement.addEventListener('input', function() {
+        if (citizenshipSelect.value === 'other') {
+            if (typeof transliterateName === 'function') { // Проверяем наличие функции
+                latNameInputElement.value = performTransliteration(this.value.trim());
+            } else {
+                 latNameInputElement.value = "Функция транслитерации не найдена";
+            }
+        }
+    });
+    // --- КОНЕЦ НОВОГО СЛУШАТЕЛЯ ---
+
+    toggleForeignFields(); // Первоначальный вызов для установки правильного состояния полей при загрузке
 
     async function declineWithMorpher(textToDecline) {
         // ... (код функции declineWithMorpher без изменений) ...
@@ -75,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 } catch (e) { 
                     const errorTextResponse = await response.text(); 
                     errorDetail += ` - ${errorTextResponse.substring(0,150)}`;
-                 }
+                }
                 throw new Error(`Ошибка Morpher API: ${errorDetail}`);
             }
             const responseData = await response.json();
@@ -83,8 +122,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (responseData && responseData["Р"]) {
                 return responseData["Р"];
             } else if (responseData && responseData["code"] === 5) {
-                 console.warn(`[declineWithMorpher] Morpher сообщил: "Не найдено русских слов" (код 5) для "${trimmedText}". Возвращаем исходный текст.`);
-                 return trimmedText;
+                console.warn(`[declineWithMorpher] Morpher сообщил: "Не найдено русских слов" (код 5) для "${trimmedText}". Возвращаем исходный текст.`);
+                return trimmedText;
             } else if (responseData && responseData["code"] === 1) {
                 console.warn(`[declineWithMorpher] Morpher сообщил: "Суточный лимит для IP адреса исчерпан" (код 1) для "${trimmedText}". Возвращаем исходный текст.`);
                 alert("Превышен лимит запросов на склонение для вашего IP-адреса на сегодня. Попробуйте позже. Склонение ФИО и должности не будет выполнено.");
@@ -123,16 +162,18 @@ document.addEventListener('DOMContentLoaded', function () {
         
         if (positionNominativeProcessed) {
             data.position = await declineWithMorpher(positionNominativeProcessed); 
-        } else if (positionNominative) {
+        } else if (positionNominative) { // Если вдруг positionNominativeProcessed пуст, но исходная должность была
              data.position = await declineWithMorpher(positionNominative);
         } else {
             data.position = '';
         }
         
+        // --- ИЗМЕНЕННАЯ ЛОГИКА ПОЛУЧЕНИЯ ФИО НА ЛАТИНИЦЕ ---
         data.lat_name = ''; 
-        if (citizenshipSelect.value === 'other' && cyrNameNominative) {
-            data.lat_name = performTransliteration(cyrNameNominative);
+        if (citizenshipSelect.value === 'other') {
+            data.lat_name = latNameInputElement.value.trim(); // Берем значение из поля ввода
         }
+        // --- КОНЕЦ ИЗМЕНЕННОЙ ЛОГИКИ ---
 
         data.passport_expire = '';
         if (citizenshipSelect.value === 'other') {
@@ -197,10 +238,8 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (e) { data.work_duration = "[ош.расч.]"; }
         }
         
-        // Дата подачи заявления (сегодняшняя дата)
         data.submissionDate = new Date().toLocaleDateString('ru-RU');
-        // Плейсхолдер {today} - также сегодняшняя дата
-        data.today = data.submissionDate; // Можно так, если формат тот же
+        data.today = data.submissionDate; 
 
         data.tick_1 = ticketOption1Checkbox.checked ? "🗹" : "□";
         data.tick_2 = ticketOption2Checkbox.checked ? "🗹" : "□";
@@ -238,8 +277,8 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Ошибка: Библиотека FileSaver для сохранения документа не найдена.');
             return;
         }
-        if (typeof transliterateName === 'undefined') {
-            console.warn('Функция transliterateName не загружена. ФИО на латинице может быть не заполнено или некорректно.');
+        if (typeof transliterateName === 'undefined') { // Эта проверка здесь больше для информации
+            console.warn('Функция transliterateName не загружена. Автозаполнение ФИО на латинице может не работать.');
         }
 
         fetch(url)
