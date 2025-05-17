@@ -10,9 +10,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const positionInputElement = document.getElementById('position_input');
     const genderSelect = document.getElementById('gender');
 
-    // Ваш токен для Morpher API
-    const morpherToken = '24ca96b8-fd93-4871-a913-18a8ee8cc17f';
-
     if (!form || !citizenshipSelect || !foreignCitizenFieldsDiv || !latNameAutoDisplayInput || 
         !passportExpireFieldContainerDiv || !passportExpireInput || !cyrNameInputElement || 
         !positionInputElement || !genderSelect ) {
@@ -35,13 +32,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateAutoLatName() {
-        if (citizenshipSelect.value === 'other' && cyrNameInputElement.value && typeof slug === 'function') {
+        // Проверяем, загрузилась ли ваша функция transliterateName
+        if (typeof transliterateName !== 'function') { 
+            console.warn("Функция transliterateName (для транслитерации) не найдена. Проверьте файл /docs/lib/transliterate.js");
+            latNameAutoDisplayInput.value = "Ошибка: транслитерация недоступна"; 
+            return;
+        }
+        if (citizenshipSelect.value === 'other' && cyrNameInputElement.value) {
             try {
-                const transliterated = slug(cyrNameInputElement.value.trim(), {
-                    locale: 'ru', replacement: ' ', lower: false, remove: /[*+~.()'"!:@]/g 
-                });
+                const nameToTransliterate = cyrNameInputElement.value.trim();
+                let transliterated = transliterateName(nameToTransliterate);
+                
+                // Приводим каждое слово к формату: ПерваяБукваЗаглавнаяОстальныеСтрочные
+                // Ваша функция transliterateName сохраняет регистр или использует тот, что в её карте.
+                // Дополнительная обработка ниже гарантирует Title Case.
                 latNameAutoDisplayInput.value = transliterated.split(' ')
-                    .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '').join(' ');
+                    .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '')
+                    .join(' ');
+
             } catch (e) {
                 console.error("Ошибка автоматической транслитерации:", e);
                 latNameAutoDisplayInput.value = "Ошибка транслитерации";
@@ -59,8 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         const trimmedText = textToDecline.trim();
         const encodedText = encodeURIComponent(trimmedText);
-        // Обновленный URL с токеном и указанием формата JSON
-        const url = `https://ws3.morpher.ru/russian/declension?s=${encodedText}&token=${morpherToken}&format=json`;
+        const url = `https://ws3.morpher.ru/russian/declension?s=${encodedText}&format=json`;
         console.log(`[declineWithMorpher] Формируем URL: ${url}`);
         try {
             const response = await fetch(url);
@@ -68,30 +75,33 @@ document.addEventListener('DOMContentLoaded', function () {
                 let errorDetail = `Статус: ${response.status}`;
                 try {
                     const errorJson = await response.json();
-                    if(errorJson && errorJson.message) errorDetail += ` - ${errorJson.message}`; // Сообщение об ошибке от Morpher
-                    else if(errorJson && errorJson.code) errorDetail += ` - Код ошибки Morpher: ${errorJson.code}`; // Код ошибки от Morpher
+                    if(errorJson && errorJson.message) errorDetail += ` - ${errorJson.message}`;
+                    else if(errorJson && errorJson.code) errorDetail += ` - Код ошибки Morpher: ${errorJson.code}`;
                     else errorDetail += ` - Ответ не в формате JSON или не содержит ожидаемых полей ошибки.`;
-                } catch (e) { // Если ответ не JSON
+                } catch (e) { 
                     const errorTextResponse = await response.text(); 
-                    errorDetail += ` - ${errorTextResponse.substring(0,150)}`; // Показать часть текстового ответа
+                    errorDetail += ` - ${errorTextResponse.substring(0,150)}`;
                  }
                 throw new Error(`Ошибка Morpher API: ${errorDetail}`);
             }
             const responseData = await response.json();
             console.log(`[declineWithMorpher] JSON ответ от Morpher для "${trimmedText}":`, responseData);
-            if (responseData && responseData["Р"]) { // "Р" - родительный падеж
+            if (responseData && responseData["Р"]) {
                 return responseData["Р"];
-            } else if (responseData && responseData["code"] === 5) { // Код 5 - Не найдено русских слов.
+            } else if (responseData && responseData["code"] === 5) {
                  console.warn(`[declineWithMorpher] Morpher сообщил: "Не найдено русских слов" (код 5) для "${trimmedText}". Возвращаем исходный текст.`);
                  return trimmedText;
+            } else if (responseData && responseData["code"] === 1) {
+                console.warn(`[declineWithMorpher] Morpher сообщил: "Суточный лимит для IP адреса исчерпан" (код 1) для "${trimmedText}". Возвращаем исходный текст.`);
+                alert("Превышен лимит запросов на склонение для вашего IP-адреса на сегодня. Попробуйте позже. Склонение ФИО и должности не будет выполнено.");
+                return trimmedText;
             }
             else {
-                console.warn(`[declineWithMorpher] Родительный падеж (Р) НЕ НАЙДЕН в ответе для "${trimmedText}". Проверьте структуру ответа. Возвращаем исходный текст.`);
-                return trimmedText; // Возвращаем исходный текст, если нужный падеж не найден
+                console.warn(`[declineWithMorpher] Родительный падеж (Р) НЕ НАЙДЕН в ответе для "${trimmedText}". Возвращаем исходный текст.`);
+                return trimmedText;
             }
         } catch (error) {
             console.error(`[declineWithMorpher] Общая ошибка при склонении "${trimmedText}":`, error);
-            // В случае любой ошибки (сетевой, API и т.д.) возвращаем исходный текст, чтобы не прерывать работу
             return trimmedText; 
         }
     }
@@ -109,50 +119,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let cyrNameNominative = cyrNameInputElement.value.trim();
         let positionNominative = positionInputElement.value.trim();
-
-        console.log("[SUBMIT] Введено ФИО (И.п.):", `"${cyrNameNominative}"`);
-        console.log("[SUBMIT] Введена Должность (И.п.):", `"${positionNominative}"`);
         
         if (cyrNameNominative) {
             data.cyr_name = await declineWithMorpher(cyrNameNominative);
-            console.log("[SUBMIT] ФИО после Morpher (Р.п.) для шаблона {cyr_name}:", `"${data.cyr_name}"`);
         } else {
             data.cyr_name = ''; 
         }
-
+        
         let positionNominativeProcessed = ''; 
         if (positionNominative && positionNominative.length > 0) {
-            // Для должностей часто требуется склонять с маленькой буквы, 
-            // но лучше уточнить у Morpher, как они лучше обрабатывают должности.
-            // Пока оставляем как есть или первую букву в нижний регистр, если это стандартная практика.
-            // Если Morpher хорошо обрабатывает должности с заглавной, эту строку можно убрать.
             positionNominativeProcessed = positionNominative.charAt(0).toLowerCase() + positionNominative.slice(1);
         }
         
         if (positionNominativeProcessed) {
-            console.log("[SUBMIT] Должность для склонения (обработанная И.п.):", `"${positionNominativeProcessed}"`);
             data.position = await declineWithMorpher(positionNominativeProcessed); 
-            console.log("[SUBMIT] Должность после Morpher (Р.п.) для шаблона {position}:", `"${data.position}"`);
-        } else if (positionNominative) { // Если должность была, но стала пустой после обработки
-             data.position = await declineWithMorpher(positionNominative); // Попробуем склонить оригинальную
-             console.log("[SUBMIT] Должность после Morpher (оригинальная) (Р.п.) для шаблона {position}:", `"${data.position}"`);
-        }
-        else {
+        } else if (positionNominative) {
+             data.position = await declineWithMorpher(positionNominative);
+        } else {
             data.position = '';
         }
         
         data.lat_name = ''; 
         if (citizenshipSelect.value === 'other') {
-            data.lat_name = latNameAutoDisplayInput.value; 
-            console.log("[SUBMIT] ФИО латиницей для шаблона {lat_name}:", `"${data.lat_name}"`);
-            
+            data.lat_name = latNameAutoDisplayInput.value; // Уже обработано updateAutoLatName
             const passportExpireRaw = passportExpireInput.value; 
             if (passportExpireRaw) {
                 try { data.passport_expire = new Date(passportExpireRaw).toLocaleDateString('ru-RU'); } 
                 catch (e) { data.passport_expire = passportExpireRaw; }
-            } else {
-                data.passport_expire = '';
-            }
+            } else { data.passport_expire = ''; }
         } else {
              data.passport_expire = '';
         }
@@ -194,55 +188,92 @@ document.addEventListener('DOMContentLoaded', function () {
         } else { data.work_duration = ''; }
         
         data.submissionDate = new Date().toLocaleDateString('ru-RU');
-
         console.log("Финальные данные для шаблона DOCX:", data);
 
         const templateUrl = '/docs/templates/mo_itr.docx';
         let outputNamePart = cyrNameNominative ? (cyrNameNominative.split(' ')[0] || "сотрудника") : "документ";
         const outputFilename = `МО_${outputNamePart}_${data.submissionDate.replace(/\./g, '-')}.docx`;
 
-        // Убедитесь, что функция loadAndProcessDocx определена и доступна
         if (typeof loadAndProcessDocx === 'function') {
             loadAndProcessDocx(templateUrl, data, outputFilename);
         } else {
             console.error("Функция loadAndProcessDocx не найдена!");
-            alert("Ошибка: функция для генерации документа не найдена.");
+            alert("Критическая ошибка: функция для генерации документа не определена.");
         }
     });
 
-    // --- Начало функции loadAndProcessDocx ---
-    // Эту функцию нужно скопировать из вашей предыдущей рабочей версии, 
-    // так как ее полный код не был предоставлен в изначальном mo_itr.js
-    // Убедитесь, что она корректно работает с PizZip, Docxtemplater и FileSaver.js
     function loadAndProcessDocx(url, data, fileName) {
-        // Примерная структура функции, замените на вашу реализацию
-        if (typeof PizZip === 'undefined' || typeof Docxtemplater === 'undefined' || typeof saveAs === 'undefined') {
-            console.error('Одна или несколько библиотек (PizZip, Docxtemplater, FileSaver) не загружены.');
-            alert('Ошибка: Необходимые библиотеки для генерации документа не найдены.');
+        if (typeof PizZip === 'undefined') {
+            console.error('Библиотека PizZip не загружена.');
+            alert('Ошибка: Библиотека PizZip для генерации документа не найдена.');
             return;
+        }
+        if (typeof Docxtemplater === 'undefined') {
+            console.error('Библиотека Docxtemplater не загружена.');
+            alert('Ошибка: Библиотека Docxtemplater для генерации документа не найдена.');
+            return;
+        }
+        if (typeof saveAs === 'undefined') { 
+            console.error('Библиотека FileSaver (saveAs) не загружена.');
+            alert('Ошибка: Библиотека FileSaver для сохранения документа не найдена.');
+            return;
+        }
+        // Проверяем вашу функцию транслитерации
+        if (typeof transliterateName === 'undefined') {
+            console.warn('Функция transliterateName не загружена. ФИО на латинице может быть не заполнено или некорректно.');
+            // Не прерываем, но предупреждаем
         }
 
         fetch(url)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`Не удалось загрузить шаблон: ${response.status} ${response.statusText}`);
+                    throw new Error(`Не удалось загрузить шаблон DOCX: ${response.status} ${response.statusText}`);
                 }
                 return response.arrayBuffer();
             })
             .then(content => {
-                const zip = new PizZip(content);
-                const doc = new Docxtemplater(zip, {
-                    paragraphLoop: true,
-                    linebreaks: true,
-                });
+                let zip;
+                try {
+                    zip = new PizZip(content);
+                } catch (e) {
+                    console.error("Ошибка при инициализации PizZip:", e);
+                    alert("Ошибка чтения файла шаблона.");
+                    throw e;
+                }
+                
+                let doc;
+                try {
+                    doc = new Docxtemplater(zip, {
+                        paragraphLoop: true,
+                        linebreaks: true,
+                        nullGetter: function(part) { 
+                            if (part.module === "rawxml") { return "";}
+                            return ""; 
+                        }
+                    });
+                } catch (e) {
+                    console.error("Ошибка при инициализации Docxtemplater:", e);
+                    alert("Ошибка подготовки генератора документа.");
+                    throw e;
+                }
 
                 doc.setData(data);
 
                 try {
                     doc.render();
                 } catch (error) {
-                    console.error('Ошибка при рендеринге шаблона:', JSON.stringify({ error: error }));
-                    alert('Произошла ошибка при заполнении шаблона документа.');
+                    if (error.properties && error.properties.errors) {
+                        console.error('Ошибка рендеринга шаблона Docxtemplater:', JSON.stringify(error.properties.errors));
+                        const unrenderedTag = error.properties.errors[0]?.properties?.part?.value;
+                        if (unrenderedTag) {
+                             alert(`Ошибка при заполнении шаблона. Возможно, не найден тег: {${unrenderedTag}}.`);
+                        } else {
+                             alert('Ошибка при заполнении шаблона. Проверьте консоль.');
+                        }
+                    } else {
+                        console.error('Общая ошибка рендеринга Docxtemplater:', error);
+                        alert('Ошибка при заполнении шаблона.');
+                    }
                     throw error;
                 }
 
@@ -251,12 +282,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 });
                 saveAs(out, fileName);
-                console.log(`Документ "${fileName}" успешно сгенерирован и скачан.`);
             })
             .catch(error => {
-                console.error('Ошибка при загрузке или обработке DOCX шаблона:', error);
-                alert(`Ошибка при генерации документа: ${error.message}`);
+                console.error('Общая ошибка в loadAndProcessDocx:', error);
             });
     }
-    // --- Конец функции loadAndProcessDocx ---
 });
