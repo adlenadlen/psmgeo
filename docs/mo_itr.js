@@ -1,8 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('moItrForm');
     const citizenshipSelect = document.getElementById('citizenship');
-    const foreignCitizenFieldsDiv = document.getElementById('foreignCitizenFields');
-    const latNameAutoDisplayInput = document.getElementById('lat_name_auto_display');
+    // const foreignCitizenFieldsDiv = document.getElementById('foreignCitizenFields'); // Удалено, т.к. элемента нет в HTML
     const passportExpireFieldContainerDiv = document.getElementById('passportExpireFieldContainer');
     const passportExpireInput = document.getElementById('passport_expire');
     
@@ -10,9 +9,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const positionInputElement = document.getElementById('position_input');
     const genderSelect = document.getElementById('gender');
 
-    if (!form || !citizenshipSelect || !foreignCitizenFieldsDiv || !latNameAutoDisplayInput || 
+    const ticketOption1Checkbox = document.getElementById('ticket_option_1');
+    const ticketOption2Checkbox = document.getElementById('ticket_option_2');
+    const ticketOption3Checkbox = document.getElementById('ticket_option_3');
+    const ticketOption4Checkbox = document.getElementById('ticket_option_4');
+
+    // Обновляем проверку обязательных элементов, убираем foreignCitizenFieldsDiv
+    if (!form || !citizenshipSelect || 
         !passportExpireFieldContainerDiv || !passportExpireInput || !cyrNameInputElement || 
-        !positionInputElement || !genderSelect ) {
+        !positionInputElement || !genderSelect || !ticketOption1Checkbox || 
+        !ticketOption2Checkbox || !ticketOption3Checkbox || !ticketOption4Checkbox) {
         console.error("КРИТИЧЕСКАЯ ОШИБКА: Один или несколько обязательных элементов формы не найдены. Проверьте HTML ID.");
         alert("Ошибка инициализации страницы. Обратитесь к администратору.");
         return; 
@@ -20,45 +26,34 @@ document.addEventListener('DOMContentLoaded', function () {
     
     function toggleForeignFields() {
         const isForeign = citizenshipSelect.value === 'other';
-        foreignCitizenFieldsDiv.style.display = isForeign ? 'block' : 'none';
+        // foreignCitizenFieldsDiv.style.display = isForeign ? 'block' : 'none'; // Удалено, т.к. элемента нет
         passportExpireFieldContainerDiv.style.display = isForeign ? 'block' : 'none';
         passportExpireInput.required = isForeign;
-        if (isForeign) {
-            updateAutoLatName();
-        } else {
-            latNameAutoDisplayInput.value = '';
-            passportExpireInput.value = '';
+        
+        if (!isForeign) {
+            passportExpireInput.value = ''; // Очищаем значение, если не иностранный гражданин
         }
     }
 
-    function updateAutoLatName() {
-        // Проверяем, загрузилась ли ваша функция transliterateName
+    function performTransliteration(nameToTransliterate) {
         if (typeof transliterateName !== 'function') { 
             console.warn("Функция transliterateName (для транслитерации) не найдена. Проверьте файл /docs/lib/transliterate.js");
-            latNameAutoDisplayInput.value = "Ошибка: транслитерация недоступна"; 
-            return;
+            return "Ошибка: транслитерация недоступна";
         }
-        if (citizenshipSelect.value === 'other' && cyrNameInputElement.value) {
-            try {
-                const nameToTransliterate = cyrNameInputElement.value.trim();
-                let transliterated = transliterateName(nameToTransliterate);
-                
-                // Приводим каждое слово к формату: ПерваяБукваЗаглавнаяОстальныеСтрочные
-                // Ваша функция transliterateName сохраняет регистр или использует тот, что в её карте.
-                // Дополнительная обработка ниже гарантирует Title Case.
-                latNameAutoDisplayInput.value = transliterated.split(' ')
-                    .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '')
-                    .join(' ');
-
-            } catch (e) {
-                console.error("Ошибка автоматической транслитерации:", e);
-                latNameAutoDisplayInput.value = "Ошибка транслитерации";
-            }
-        } else if (citizenshipSelect.value !== 'other') {
-            latNameAutoDisplayInput.value = '';
+        try {
+            let transliterated = transliterateName(nameToTransliterate);
+            return transliterated.split(' ')
+                .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '')
+                .join(' ');
+        } catch (e) {
+            console.error("Ошибка автоматической транслитерации:", e);
+            return "Ошибка транслитерации";
         }
     }
     
+    citizenshipSelect.addEventListener('change', toggleForeignFields);
+    toggleForeignFields(); // Первоначальный вызов для установки правильного состояния
+
     async function declineWithMorpher(textToDecline) {
         console.log(`[declineWithMorpher] Вызвана для текста: "${textToDecline}"`);
         if (!textToDecline || typeof textToDecline !== 'string' || textToDecline.trim() === '') {
@@ -106,13 +101,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    citizenshipSelect.addEventListener('change', toggleForeignFields);
-    cyrNameInputElement.addEventListener('input', updateAutoLatName);
-    toggleForeignFields();
-
     form.addEventListener('submit', async function (event) {
         event.preventDefault();
-        console.log("--- НАЧАЛО ОБРАБОТКИ ФОРМЫ (MORPHOR, ЦЕЛЬ: СКЛОНЕННЫЕ В data ДЛЯ DOCX) ---");
+        console.log("--- НАЧАЛО ОБРАБОТКИ ФОРМЫ ---");
 
         const formData = new FormData(form);
         const data = {}; 
@@ -140,15 +131,21 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         
         data.lat_name = ''; 
+        if (citizenshipSelect.value === 'other' && cyrNameNominative) {
+            data.lat_name = performTransliteration(cyrNameNominative);
+        }
+
+        data.passport_expire = '';
         if (citizenshipSelect.value === 'other') {
-            data.lat_name = latNameAutoDisplayInput.value; // Уже обработано updateAutoLatName
             const passportExpireRaw = passportExpireInput.value; 
             if (passportExpireRaw) {
-                try { data.passport_expire = new Date(passportExpireRaw).toLocaleDateString('ru-RU'); } 
-                catch (e) { data.passport_expire = passportExpireRaw; }
-            } else { data.passport_expire = ''; }
-        } else {
-             data.passport_expire = '';
+                try { 
+                    let formattedDate = new Date(passportExpireRaw).toLocaleDateString('ru-RU');
+                    data.passport_expire = `до ${formattedDate}`;
+                } catch (e) { 
+                    data.passport_expire = passportExpireRaw; 
+                }
+            }
         }
         
         const directFields = ['passport_number', 'path', 'phone', 'site', 'gender'];
@@ -156,18 +153,30 @@ document.addEventListener('DOMContentLoaded', function () {
             data[fieldName] = formData.get(fieldName) || '';
         });
 
+        data.mo_to_year = '';
         const dateFields = ['birthday', 'mo_from', 'mo_to', 'work_from']; 
         dateFields.forEach(fieldName => {
             const rawDate = formData.get(fieldName);
             if (rawDate) {
-                try { data[fieldName] = new Date(rawDate).toLocaleDateString('ru-RU'); } 
-                catch (e) { data[fieldName] = rawDate; }
-            } else { data[fieldName] = ''; }
+                try { 
+                    data[fieldName] = new Date(rawDate).toLocaleDateString('ru-RU');
+                    if (fieldName === 'mo_to' && data.mo_to) {
+                        const yearParts = data.mo_to.split('.');
+                        if (yearParts.length === 3) {
+                            data.mo_to_year = yearParts[2];
+                        }
+                    }
+                } catch (e) { 
+                    data[fieldName] = rawDate; 
+                    if (fieldName === 'mo_to') data.mo_to_year = '';
+                }
+            } else { 
+                data[fieldName] = ''; 
+                if (fieldName === 'mo_to') data.mo_to_year = '';
+            }
         });
         
-        const moDurationInputVal = formData.get('mo_duration');
-        if (moDurationInputVal) { data.mo_duration = moDurationInputVal; } 
-        else if (data.mo_from && data.mo_to) {
+        if (data.mo_from && data.mo_to) {
             try {
                 const moFromDate = new Date(formData.get('mo_from'));
                 const moToDate = new Date(formData.get('mo_to'));
@@ -177,17 +186,25 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (e) { data.mo_duration = "[ош.расч.]"; }
         } else { data.mo_duration = ''; }
 
+        data.work_duration = ''; 
         if (data.mo_from && data.work_from) {
+            const moFromDateForCalc = new Date(formData.get('mo_from'));
+            const workFromDateForCalc = new Date(formData.get('work_from'));
             try {
-                const moFromDate = new Date(formData.get('mo_from'));
-                const workFromDate = new Date(formData.get('work_from'));
-                if (!isNaN(moFromDate) && !isNaN(workFromDate) && moFromDate >= workFromDate) {
-                    data.work_duration = Math.floor((moFromDate - workFromDate) / (1000 * 60 * 60 * 24));
+                if (!isNaN(moFromDateForCalc) && !isNaN(workFromDateForCalc) && moFromDateForCalc >= workFromDateForCalc) {
+                    let duration = Math.floor((moFromDateForCalc - workFromDateForCalc) / (1000 * 60 * 60 * 24));
+                    data.work_duration = `${duration} д.`;
                 } else { data.work_duration = "[дат.ош.]"; }
             } catch (e) { data.work_duration = "[ош.расч.]"; }
-        } else { data.work_duration = ''; }
+        }
         
         data.submissionDate = new Date().toLocaleDateString('ru-RU');
+
+        data.tick_1 = ticketOption1Checkbox.checked ? "🗹" : "□";
+        data.tick_2 = ticketOption2Checkbox.checked ? "🗹" : "□";
+        data.tick_3 = ticketOption3Checkbox.checked ? "🗹" : "□";
+        data.tick_4 = ticketOption4Checkbox.checked ? "🗹" : "□";
+
         console.log("Финальные данные для шаблона DOCX:", data);
 
         const templateUrl = '/docs/templates/mo_itr.docx';
@@ -208,9 +225,9 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Ошибка: Библиотека PizZip для генерации документа не найдена.');
             return;
         }
-        if (typeof docxtemplater === 'undefined') {
-            console.error('Библиотека docxtemplater не загружена.');
-            alert('Ошибка: Библиотека docxtemplater для генерации документа не найдена.');
+        if (typeof Docxtemplater === 'undefined') { // Проверка с большой 'D'
+            console.error('Библиотека Docxtemplater не загружена.');
+            alert('Ошибка: Библиотека Docxtemplater для генерации документа не найдена.');
             return;
         }
         if (typeof saveAs === 'undefined') { 
@@ -218,10 +235,8 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Ошибка: Библиотека FileSaver для сохранения документа не найдена.');
             return;
         }
-        // Проверяем вашу функцию транслитерации
         if (typeof transliterateName === 'undefined') {
             console.warn('Функция transliterateName не загружена. ФИО на латинице может быть не заполнено или некорректно.');
-            // Не прерываем, но предупреждаем
         }
 
         fetch(url)
@@ -243,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 let doc;
                 try {
-                    doc = new docxtemplater(zip, {
+                    doc = new Docxtemplater(zip, { // Создание экземпляра с большой 'D'
                         paragraphLoop: true,
                         linebreaks: true,
                         nullGetter: function(part) { 
@@ -252,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     });
                 } catch (e) {
-                    console.error("Ошибка при инициализации docxtemplater:", e);
+                    console.error("Ошибка при инициализации Docxtemplater:", e);
                     alert("Ошибка подготовки генератора документа.");
                     throw e;
                 }
@@ -263,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     doc.render();
                 } catch (error) {
                     if (error.properties && error.properties.errors) {
-                        console.error('Ошибка рендеринга шаблона docxtemplater:', JSON.stringify(error.properties.errors));
+                        console.error('Ошибка рендеринга шаблона Docxtemplater:', JSON.stringify(error.properties.errors));
                         const unrenderedTag = error.properties.errors[0]?.properties?.part?.value;
                         if (unrenderedTag) {
                              alert(`Ошибка при заполнении шаблона. Возможно, не найден тег: {${unrenderedTag}}.`);
@@ -271,7 +286,7 @@ document.addEventListener('DOMContentLoaded', function () {
                              alert('Ошибка при заполнении шаблона. Проверьте консоль.');
                         }
                     } else {
-                        console.error('Общая ошибка рендеринга docxtemplater:', error);
+                        console.error('Общая ошибка рендеринга Docxtemplater:', error);
                         alert('Ошибка при заполнении шаблона.');
                     }
                     throw error;
