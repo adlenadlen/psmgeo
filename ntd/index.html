@@ -1,34 +1,34 @@
-<!doctypehtml><html lang=ru><meta charset=UTF-8><meta content="width=device-width,initial-scale=1"name=viewport><title>НТД</title><meta content="Нормативно-техническая документация (НТД) для ИЗП в системе psmgeo. Актуальные ГОСТы, СП и регламенты."name=description><link href=/style.css rel=stylesheet><link href=/favicon.png rel=icon type=image/png><style>:root{--input-border-color:#ccc;--input-background-color:#fff;--input-text-color:#1f1f1f}@media (prefers-color-scheme:dark){:root{--input-border-color:#5a5a5a;--input-background-color:#2c2c2c;--input-text-color:var(--text-color)}}#searchInput{border:1px solid var(--input-border-color);background-color:var(--input-background-color);color:var(--input-text-color)}.no-results{padding:var(--spacing-unit);text-align:center;font-style:italic;display:none}.document-item{display:flex;align-items:baseline}.document-item::before{content:"•";color:var(--text-color);margin-right:calc(var(--spacing-unit)/ 2);flex-shrink:0}.document-item a{display:inline-block;font-size:1.1rem;color:var(--text-color);text-decoration:none;line-height:1.4;padding:calc(var(--spacing-unit)/ 5) 0}.document-item a:visited{color:var(--text-color)}.document-item a:focus,.document-item a:hover{color:var(--text-color);opacity:.75;text-decoration:underline}</style><div class=page-container><nav aria-label=breadcrumb class=breadcrumbs><ol><li><a href=/index.html>Главная</a><li aria-current=page class=current>НТД</ol></nav><h1>Нормативно-техническая документация</h1><input aria-label="Поиск по документам"id=searchInput onkeyup=filterDocuments() placeholder="Поиск по названию документа..."style="width:100%;padding:var(--spacing-unit);margin-bottom:calc(var(--spacing-unit) * 2);font-size:1rem;border-radius:4px;display:block;box-sizing:border-box"><div id=documentSections><section data-section-name=gost><h2>ГОСТ</h2><div class=vertical><div class=document-item><a href=GOST_R_51872-2024.pdf>ГОСТ Р 51872-2024 — Документация исполнительная геодезическая.</a></div><div class=document-item><a href=GOST_R_21.101-2020.pdf>ГОСТ Р 21.101-2020 — СПДС Основные требования к проектной и рабочей документации.</a></div><div class=document-item><a href=GOST_2.301-68.pdf>ГОСТ 2.301-68 — ЕСКД Форматы.</a></div><div class=document-item><a href=GOST_2.302-68.pdf>ГОСТ 2.302-68 — ЕСКД Масштабы.</a></div><div class=document-item><a href=GOST_2.303-68.pdf>ГОСТ 2.303-68 — ЕСКД Линии.</a></div><div class=document-item><a href=GOST_2.304-81.pdf>ГОСТ 2.304-81 — ЕСКД Шрифты чертежные.</a></div><div class=document-item><a href=GOST_2.305-2008.pdf>ГОСТ 2.305-2008 — ЕСКД Изображения - виды, разрезы, сечения.</a></div><div class=document-item><a href=GOST_2.306-68.pdf>ГОСТ 2.306-68 — ЕСКД Обозначения графические материалов и правила их нанесения на чертежах.</a></div><div class=document-item><a href=GOST_2.307-2011.pdf>ГОСТ 2.307-2011 — ЕСКД Нанесение размеров и предельных отклонений.</a></div></div></section><section data-section-name=sp><h2>Свод правил</h2><div class=vertical><div class=document-item><a href=SP_70.13330.2012.pdf>СП 70.13330.2012 — Несущие и ограждающие конструкции.</a></div><div class=document-item><a href=SP_45.13330.2017.pdf>СП 45.13330.2017 — Земляные сооружения, основания и фундаменты.</a></div><div class=document-item><a href=SP_126.13330.2017.pdf>СП 126.13330.2017 — Геодезические работы в строительстве.</a></div></div></section><section data-section-name=reglament><h2>Регламент ИЗП</h2><div class=vertical><div class=document-item><a href=RG.01.11.IZP_red3.pdf>РГ.01.11.ИЗП ред. 3 — Ведение исполнительной и формирование ПрСД при строительстве ИЗП.</a></div><div class=document-item><a href=F_50.RG.01.11.IZP_red3.pdf>Ф_50.РГ.01.11.ИЗП ред. 3 — Альбом образцов исполнительных геодезических схем.</a></div></div></section></div><div class=no-results id=noResultsMessage>По вашему запросу ничего не найдено.</div></div><script>function filterDocuments() {
-			const input = document.getElementById('searchInput');
-			const filter = input.value.toLowerCase().trim();
-			const sectionsContainer = document.getElementById('documentSections');
-			const sections = sectionsContainer.querySelectorAll('section');
-			const noResultsMessage = document.getElementById('noResultsMessage');
-			let totalVisibleItems = 0;
-			sections.forEach(section => {
-				const items = section.querySelectorAll('.document-item');
-				let sectionHasVisibleItems = false;
-				if (items.length > 0) {
-					items.forEach(item => {
-						const txtValue = item.textContent || item.innerText;
-						if (txtValue.toLowerCase().includes(filter)) {
-							item.style.display = "";
-							sectionHasVisibleItems = true;
-							totalVisibleItems++;
-						} else {
-							item.style.display = "none";
-						}
-					});
-					if (sectionHasVisibleItems) {
-						section.style.display = "";
-					} else {
-						section.style.display = "none";
-					}
-				}
-			});
-			if (totalVisibleItems === 0 && filter !== "") {
-				noResultsMessage.style.display = "block";
-			} else {
-				noResultsMessage.style.display = "none";
-			}
-		}</script>
+<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta content="width=device-width,initial-scale=1" name="viewport"><title>НТД</title><meta content="Нормативно-техническая документация (НТД) в системе psmgeo. Актуальные ГОСТы, СП и регламенты." name="description"><link href="/style.css" rel="stylesheet"><link href="/favicon.png" rel="icon" type="image/png"><style>:root{--input-border-color:#ccc;--input-background-color:#fff;--input-text-color:#1f1f1f}@media (prefers-color-scheme:dark){:root{--input-border-color:#5a5a5a;--input-background-color:#2c2c2c;--input-text-color:var(--text-color)}}#searchInput{border:1px solid var(--input-border-color);background-color:var(--input-background-color);color:var(--input-text-color);width:100%;padding:var(--spacing-unit);margin-bottom:calc(var(--spacing-unit) * 2);font-size:1rem;border-radius:4px;display:block;box-sizing:border-box}.no-results{padding:var(--spacing-unit);text-align:center;font-style:italic;display:none}.document-item{display:flex;align-items:baseline}.document-item::before{content:"•";color:var(--text-color);margin-right:calc(var(--spacing-unit)/ 2);flex-shrink:0}.document-item a{display:inline-block;font-size:1.1rem;color:var(--text-color);text-decoration:none;line-height:1.4;padding:calc(var(--spacing-unit)/ 5) 0}.document-item a:visited{color:var(--text-color)}.document-item a:focus,.document-item a:hover{color:var(--text-color);opacity:.75;text-decoration:underline}</style></head><body><div class="page-container"><nav aria-label="breadcrumb" class="breadcrumbs"><ol><li><a href="/index.html">Главная</a></li><li aria-current="page" class="current">НТД</li></ol></nav><h1>Нормативно-техническая документация</h1><input aria-label="Поиск по документам" id="searchInput" onkeyup="filterDocuments()" placeholder="Поиск по названию документа..."><div id="documentSections"><section data-section-name="gost"><h2>ГОСТ</h2><div class="vertical"><div class="document-item"><a href="GOST_R_51872-2024.pdf">ГОСТ Р 51872-2024 — Документация исполнительная геодезическая.</a></div><div class="document-item"><a href="GOST_R_21.101-2020.pdf">ГОСТ Р 21.101-2020 — СПДС Основные требования к проектной и рабочей документации.</a></div><div class="document-item"><a href="GOST_2.301-68.pdf">ГОСТ 2.301-68 — ЕСКД Форматы.</a></div><div class="document-item"><a href="GOST_2.302-68.pdf">ГОСТ 2.302-68 — ЕСКД Масштабы.</a></div><div class="document-item"><a href="GOST_2.303-68.pdf">ГОСТ 2.303-68 — ЕСКД Линии.</a></div><div class="document-item"><a href="GOST_2.304-81.pdf">ГОСТ 2.304-81 — ЕСКД Шрифты чертежные.</a></div><div class="document-item"><a href="GOST_2.305-2008.pdf">ГОСТ 2.305-2008 — ЕСКД Изображения - виды, разрезы, сечения.</a></div><div class="document-item"><a href="GOST_2.306-68.pdf">ГОСТ 2.306-68 — ЕСКД Обозначения графические материалов и правила их нанесения на чертежах.</a></div><div class="document-item"><a href="GOST_2.307-2011.pdf">ГОСТ 2.307-2011 — ЕСКД Нанесение размеров и предельных отклонений.</a></div></div></section><section data-section-name="sp"><h2>Свод правил</h2><div class="vertical"><div class="document-item"><a href="SP_70.13330.2012.pdf">СП 70.13330.2012 — Несущие и ограждающие конструкции.</a></div><div class="document-item"><a href="SP_45.13330.2017.pdf">СП 45.13330.2017 — Земляные сооружения, основания и фундаменты.</a></div><div class="document-item"><a href="SP_126.13330.2017.pdf">СП 126.13330.2017 — Геодезические работы в строительстве.</a></div></div></section><section data-section-name="reglament"><h2>Регламент ИЗП</h2><div class="vertical"><div class="document-item"><a href="RG.01.11.IZP_red3.pdf">РГ.01.11.ИЗП ред. 3 — Ведение исполнительной и формирование ПрСД при строительстве ИЗП.</a></div><div class="document-item"><a href="F_50.RG.01.11.IZP_red3.pdf">Ф_50.РГ.01.11.ИЗП ред. 3 — Альбом образцов исполнительных геодезических схем.</a></div></div></section></div><div class="no-results" id="noResultsMessage">По вашему запросу ничего не найдено.</div></div><script>function filterDocuments() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase().trim();
+            const sectionsContainer = document.getElementById('documentSections');
+            const sections = sectionsContainer.querySelectorAll('section');
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            let totalVisibleItems = 0;
+            sections.forEach(section => {
+                const items = section.querySelectorAll('.document-item');
+                let sectionHasVisibleItems = false;
+                if (items.length > 0) {
+                    items.forEach(item => {
+                        const txtValue = item.textContent || item.innerText;
+                        if (txtValue.toLowerCase().includes(filter)) {
+                            item.style.display = "";
+                            sectionHasVisibleItems = true;
+                            totalVisibleItems++;
+                        } else {
+                            item.style.display = "none";
+                        }
+                    });
+                    if (sectionHasVisibleItems) {
+                        section.style.display = "";
+                    } else {
+                        section.style.display = "none";
+                    }
+                }
+            });
+            if (totalVisibleItems === 0 && filter !== "") {
+                noResultsMessage.style.display = "block";
+            } else {
+                noResultsMessage.style.display = "none";
+            }
+        }</script></body></html>
