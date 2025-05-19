@@ -67,7 +67,7 @@
         </div>
     </section>
 </div>
-<script src="/70/lib/proj4.js"></script> 
+<script src="/70/lib/proj4.js"></script>
 <script>
 // Определяем EPSG:28418 для proj4
 if (typeof proj4 !== 'undefined') {
@@ -164,7 +164,7 @@ function displayRecords(records) {
         lineDiv.appendChild(pointLink);
         lineDiv.appendChild(document.createTextNode(outputStringPart));
 
-        // --- Начало добавленного кода для Google Maps ---
+        // --- Начало добавленного кода для Google и Яндекс Карт ---
         if (typeof proj4 !== 'undefined') {
             const mskCoords = getCoordsInTargetMode(record.fields, 'msk');
             if (!isNaN(mskCoords.x) && !isNaN(mskCoords.y)) {
@@ -172,30 +172,41 @@ function displayRecords(records) {
                 const sk42_y = mskCoords.y + 18000000; // Восток для зоны 18
 
                 try {
-                    // Proj4 ожидает [восток, север] для EPSG:28418 (согласно определению AXIS)
-                    // и возвращает [долгота, широта] для EPSG:4326
                     const wgsCoords = proj4("EPSG:28418", "EPSG:4326", [sk42_y, sk42_x]);
                     const lat = wgsCoords[1]; // Широта
                     const lon = wgsCoords[0]; // Долгота
 
+                    // Google Maps Link
                     const gmapsButton = document.createElement('a');
-                    gmapsButton.href = `https://www.google.com/maps?q=${lat},${lon}`;
-                    gmapsButton.textContent = '🗺️';
-                    gmapsButton.target = '_blank'; // Открыть в новой вкладке
-                    gmapsButton.style.marginLeft = '8px'; // Небольшой отступ
-                    gmapsButton.style.textDecoration = 'none'; // Убрать подчеркивание
+                    gmapsButton.href = `https://www.google.com/maps?q=latitude,longitude{lat},${lon}`;
+                    gmapsButton.textContent = 'G'; // Текст для Google Карт
+                    gmapsButton.target = '_blank';
+                    gmapsButton.style.marginLeft = '8px';
+                    gmapsButton.style.textDecoration = 'none';
+                    gmapsButton.title = 'Открыть в Google Картах'; // Всплывающая подсказка
                     lineDiv.appendChild(gmapsButton);
+
+                    // Yandex Maps Link
+                    const ymapsButton = document.createElement('a');
+                    ymapsButton.href = `https://yandex.ru/maps/?pt=${lon},${lat}&z=18&l=map`;
+                    ymapsButton.textContent = 'Я'; // Текст для Яндекс Карт
+                    ymapsButton.target = '_blank';
+                    ymapsButton.style.marginLeft = '5px'; // Отступ от кнопки Google
+                    ymapsButton.style.textDecoration = 'none';
+                    ymapsButton.title = 'Открыть в Яндекс Картах'; // Всплывающая подсказка
+                    lineDiv.appendChild(ymapsButton);
+
                 } catch (e) {
-                    console.warn(`Ошибка преобразования координат для Google Maps (точка ${point}):`, e);
+                    console.warn(`Ошибка преобразования координат для карт (точка ${point}):`, e);
                     const errorSpan = document.createElement('span');
-                    errorSpan.textContent = ' (ошибка карты)';
+                    errorSpan.textContent = ' (ошибка карт)';
                     errorSpan.style.fontSize = '0.8em';
                     errorSpan.style.color = 'red';
                     errorSpan.style.marginLeft = '5px';
                     lineDiv.appendChild(errorSpan);
                 }
             } else {
-                 console.warn(`Не удалось получить МСК координаты для точки ${point} для Google Maps.`);
+                 console.warn(`Не удалось получить МСК координаты для точки ${point} для карт.`);
                  const errorSpan = document.createElement('span');
                  errorSpan.textContent = ' (нет МСК)';
                  errorSpan.style.fontSize = '0.8em';
@@ -204,7 +215,6 @@ function displayRecords(records) {
                  lineDiv.appendChild(errorSpan);
             }
         } else {
-            // Если proj4 не загружен, можно добавить заглушку или сообщение
             const errorSpan = document.createElement('span');
             errorSpan.textContent = ' (карты недоступны)';
             errorSpan.style.fontSize = '0.8em';
@@ -212,7 +222,7 @@ function displayRecords(records) {
             errorSpan.style.marginLeft = '5px';
             lineDiv.appendChild(errorSpan);
         }
-        // --- Конец добавленного кода для Google Maps ---
+        // --- Конец добавленного кода для Google и Яндекс Карт ---
 
         fragment.appendChild(lineDiv);
     });
