@@ -180,7 +180,7 @@ function displayRecords(records) {
                     const lon = wgsCoords[0];
 
                     const gmapsButton = document.createElement('a');
-                    gmapsButton.href = `https://www.google.com/maps?q=latitude,longitude{lat},${lon}`;
+                    gmapsButton.href = `https://www.google.com/maps?q=${lat},${lon}`;
                     gmapsButton.textContent = 'G';
                     gmapsButton.target = '_blank';
                     gmapsButton.style.marginLeft = '8px';
@@ -347,7 +347,7 @@ function populateNearbyList(nearbyPointsArray) {
                         const point_lon = point_wgsCoords[0];
 
                         const gmapsBtn = document.createElement('a');
-                        gmapsBtn.href = `https://www.google.com/maps?q=latitude,longitude{point_lat},${point_lon}`;
+                        gmapsBtn.href = `https://www.google.com/maps?q=${point_lat},${point_lon}`;
                         gmapsBtn.textContent = 'G';
                         gmapsBtn.target = '_blank';
                         gmapsBtn.style.marginLeft = '8px'; gmapsBtn.style.textDecoration = 'none'; gmapsBtn.title = 'Открыть в Google Картах';
