@@ -6,7 +6,7 @@
 <title>ГРО</title>
 <meta content="Поиск по точкам Геодезической разбивочной основы (ГРО) для Иркутского завода полимеров."name=description>
 <link href=/favicon.png rel=icon type=image/png>
-<link href="/style_gro.css" rel="stylesheet">
+<link href="/style.css" rel="stylesheet">
 </head>
 <body>
 <div class=page-container>
@@ -181,7 +181,7 @@ lineDiv.appendChild(document.createTextNode(outputStringPart));
                 const lon = wgsCoords[0];
 
                 const gmapsButton = document.createElement('a');
-                gmapsButton.href = `https://www.google.com/maps?q=latitude,longitude${lat},${lon}`; // Исправлено
+                gmapsButton.href = `https://maps.google.com/?q=<span class="math-inline">\{lat\},</span>{lon}`; // Исправлено
                 gmapsButton.textContent = 'G';
                 gmapsButton.target = '_blank';
                 gmapsButton.style.marginLeft = '8px';
@@ -338,7 +338,7 @@ li.className = 'nearby-item';
                     const point_lon = point_wgsCoords[0];
 
                     const gmapsBtn = document.createElement('a');
-                    gmapsBtn.href = `https://www.google.com/maps?q=latitude,longitude${point_lat},${point_lon}`; // Исправлено
+                    gmapsBtn.href = `https://maps.google.com/?q=<span class="math-inline">\{point\_lat\},</span>{point_lon}`; // Исправлено
                     gmapsBtn.textContent = 'G';
                     gmapsBtn.target = '_blank';
                     gmapsBtn.style.marginLeft = '8px'; gmapsBtn.style.textDecoration = 'none'; gmapsBtn.title = 'Открыть в Google Картах';
