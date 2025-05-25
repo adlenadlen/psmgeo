@@ -1,1 +1,74 @@
-:root{--primary-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Ubuntu","Helvetica Neue",Arial,sans-serif;--mono-font:"SF Mono","Monaco",Consolas,"Lucida Console","Roboto Mono","Droid Sans Mono","Ubuntu Mono","Liberation Mono","DejaVu Sans Mono","Courier New",monospace;--container-max-width:900px;--spacing-unit:10px;--background-color:#fff;--text-color:#000;--button-background-color:#eee;--button-hover-background-color:#f0f0f0}@media (prefers-color-scheme:dark){:root{--background-color:#1e1e1e;--text-color:#f5f5f5;--button-background-color:#333;--button-hover-background-color:#444}}*{margin:0;padding:0;box-sizing:border-box}html{font-size:16px}body{font-family:var(--primary-font);background:var(--background-color);color:var(--text-color);line-height:1.6;padding:var(--spacing-unit);transition:background-color .3s ease,color .3s ease}.page-container{max-width:var(--container-max-width);margin:calc(var(--spacing-unit)*2) auto;padding:0 calc(var(--spacing-unit)*2)}h1{font-size:2rem;margin-bottom:calc(var(--spacing-unit)*2)}.breadcrumbs{font-size:1.1rem;margin-bottom:calc(var(--spacing-unit)*1.5)}.breadcrumbs ol{list-style:none;padding-left:0;margin:0;display:flex;flex-wrap:wrap;align-items:center}.breadcrumbs li a{text-decoration:none;color:var(--text-color)}.breadcrumbs li a:hover{text-decoration:underline}.breadcrumbs li+li::before{content:'>';margin:0 calc(var(--spacing-unit)*.8);color:var(--text-color);opacity:.6}.breadcrumbs li.current{font-weight:400;color:var(--text-color);opacity:.7}.b{display:inline-block;text-decoration:none;text-align:left;font-family:inherit;font-size:1.2rem;padding:var(--spacing-unit) calc(var(--spacing-unit)*2);border-radius:20px;cursor:pointer;font-weight:600;border:0;color:var(--text-color);background-color:var(--button-background-color);transition:background-color .2s ease}.b:hover{background-color:var(--button-hover-background-color)}section{margin-bottom:calc(var(--spacing-unit)*1.5)}section>div{display:flex;flex-wrap:wrap;gap:var(--spacing-unit)}section>div.vertical{flex-direction:column;align-items:flex-start}section>h2{font-weight:500;margin-bottom:var(--spacing-unit);font-size:1.5rem}@media (max-width:425px){html{font-size:15px}:root{--spacing-unit:9px}}
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap");
+:root{
+  --color_black: #000;
+  --color_white: #eee;
+  --color_light_gray: #ccc;
+  --color_gray: #808080;
+  --color_dark_gray: #222;
+  --hover_brightness: brightness(1.2);
+  --hover_transition: 0.2s ease;
+  --button_padding: 0.4rem 0.8rem;
+}
+
+html {
+  font-size: clamp(16px,3vw,20px);
+  background: var(--color_black);
+  color: var(--color_white);
+  max-width: 800px;
+  margin: auto;
+  padding: 1.2rem;
+  font-family: Manrope, sans-serif;
+}
+
+h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-botton: 0.8rem;
+}
+
+h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.button {
+  display: inline-block;
+  text-decoration: none;
+  text-align: left;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--hover_transition);
+  border-radius: 1rem;
+  border: 0px;
+}
+.button_primary {
+  background-color: var(--color_dark_gray);
+  padding: var(--button_padding);
+  color: var(--color_white);
+  font-weight: 600;
+}
+.button_primary:hover {
+  filter: var(--hover_brightness);
+}
+.button_secondary {
+  background-color: transparent;
+  padding: 0.4rem 0.8rem;
+  color: var(--color_light_gray);
+  box-shadow: inset 0 0 0 1px;
+}
+.button_secondary:hover {
+  filter: var(--hover_brightness);
+}
+section {
+  margin-bottom: 1rem;
+}
+section > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+div.vertical {
+  flex-direction: column;
+  align-items: flex-start;
+}
