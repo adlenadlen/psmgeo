@@ -6,7 +6,7 @@
     <title>ГРО</title>
     <meta content="Поиск по точкам Геодезической разбивочной основы (ГРО) для Иркутского завода полимеров."name=description>
     <link href=/favicon.png rel=icon type=image/png>
-    <link href="/style_gro.css" rel="stylesheet"> </head>
+    <link href="/style.css" rel="stylesheet"> </head>
 <body>
 <div class=page-container>
     <nav aria-label=breadcrumb class=breadcrumbs>
@@ -71,6 +71,7 @@
     </section>
 </div>
 <script src="/70/lib/proj4.js"></script>
+<script src="/lib/gro-common.js"></script>
 <script>
 // Определяем EPSG:28418 для proj4
 if (typeof proj4 !== 'undefined') {
@@ -114,18 +115,6 @@ let manualSourceSystemRadios,manualTargetSystemRadios;
 let manualCoordXInput,manualCoordYInput;
 let manualResultXSpan,manualResultYSpan;
 
-function formatCoordinate(value){if(value===null||typeof value==='undefined'||isNaN(value)){return'N/A'}return parseFloat(value).toFixed(3)}
-function normalizePointValue(str){if(!str)return'';return str.toLowerCase().replace(/[\._,\-]/g,'')}
-function convertMskToLocalX(xMsk,yMsk,X0_Local_IN_MSK,Y0_Local_IN_MSK,K1_Local,K2_Local){if(isNaN(xMsk)||isNaN(yMsk))return NaN;return(xMsk-X0_Local_IN_MSK)*K1_Local+(yMsk-Y0_Local_IN_MSK)*K2_Local}
-function convertMskToLocalY(xMsk,yMsk,X0_Local_IN_MSK,Y0_Local_IN_MSK,K1_Local,K2_Local){if(isNaN(xMsk)||isNaN(yMsk))return NaN;return(yMsk-Y0_Local_IN_MSK)*K1_Local-(xMsk-X0_Local_IN_MSK)*K2_Local}
-function convertLocalToMskX(xLocal,yLocal,X0_Local_IN_MSK,Y0_Local_IN_MSK,K1_Local,K2_Local){if(isNaN(xLocal)||isNaN(yLocal))return NaN;return X0_Local_IN_MSK+xLocal*K1_Local-yLocal*K2_Local}
-function convertLocalToMskY(xLocal,yLocal,X0_Local_IN_MSK,Y0_Local_IN_MSK,K1_Local,K2_Local){if(isNaN(xLocal)||isNaN(yLocal))return NaN;return Y0_Local_IN_MSK+xLocal*K2_Local+yLocal*K1_Local}
-function parseCSV(csvText){const lines=csvText.trim().split('\n');return lines.map((line,index)=>{const cleanedLine=line.trim();if(!cleanedLine)return null;const parts=cleanedLine.split(',');if(parts.length>=6){return{id:`gs_${index+1}`,fields:{CoordSystem:parts[COL_INDEX.CoordSystem]?.trim().toUpperCase()||'UNKNOWN',Point:parts[COL_INDEX.Point]?.trim()||'',[BASE_X_FIELD_NAME]:parts[COL_INDEX.Xraw]?.trim()||'',[BASE_Y_FIELD_NAME]:parts[COL_INDEX.Yraw]?.trim()||'',H:parts[COL_INDEX.H]?.trim()||'',Info:parts[COL_INDEX.Info]?.trim()||''}}}
-console.warn(`Skipping malformed CSV line ${index+1}: ${line}`);return null}).filter(record=>record!==null)}
-function transformCoordinates(inputX,inputY,sourceSystemLowercase,targetSystemLowercase){if(isNaN(inputX)||isNaN(inputY)){return{x:NaN,y:NaN}}if(sourceSystemLowercase===targetSystemLowercase){return{x:inputX,y:inputY}}let xMsk,yMsk;switch(sourceSystemLowercase){case'msk':xMsk=inputX;yMsk=inputY;break;case'izp':xMsk=convertLocalToMskX(inputX,inputY,X0_SS_IN_MSK,Y0_SS_IN_MSK,K1_SS,K2_SS);yMsk=convertLocalToMskY(inputX,inputY,X0_SS_IN_MSK,Y0_SS_IN_MSK,K1_SS,K2_SS);break;case'gfu':xMsk=convertLocalToMskX(inputX,inputY,X0_GFU_IN_MSK,Y0_GFU_IN_MSK,K1_GFU,K2_GFU);yMsk=convertLocalToMskY(inputX,inputY,X0_GFU_IN_MSK,Y0_GFU_IN_MSK,K1_GFU,K2_GFU);break;default:console.warn(`Transform: Unknown source system '${sourceSystemLowercase}'`);return{x:NaN,y:NaN}}if(isNaN(xMsk)||isNaN(yMsk)){return{x:NaN,y:NaN}}switch(targetSystemLowercase){case'msk':return{x:xMsk,y:yMsk};case'izp':return{x:convertMskToLocalX(xMsk,yMsk,X0_SS_IN_MSK,Y0_SS_IN_MSK,K1_SS,K2_SS),y:convertMskToLocalY(xMsk,yMsk,X0_SS_IN_MSK,Y0_SS_IN_MSK,K1_SS,K2_SS)};case'gfu':return{x:convertMskToLocalX(xMsk,yMsk,X0_GFU_IN_MSK,Y0_GFU_IN_MSK,K1_GFU,K2_GFU),y:convertMskToLocalY(xMsk,yMsk,X0_GFU_IN_MSK,Y0_GFU_IN_MSK,K1_GFU,K2_GFU)};default:console.warn(`Transform: Unknown target system '${targetSystemLowercase}'`);return{x:NaN,y:NaN}}}
-function getCoordsInTargetMode(recordFields,targetModeLowercase){const xBaseRaw=recordFields[BASE_X_FIELD_NAME];const yBaseRaw=recordFields[BASE_Y_FIELD_NAME];const sourceSystemUppercase=recordFields['CoordSystem'];const xBase=parseFloat(xBaseRaw);const yBase=parseFloat(yBaseRaw);return transformCoordinates(xBase,yBase,sourceSystemUppercase.toLowerCase(),targetModeLowercase)}
-function updateManualConversion(){if(!manualCoordXInput||!manualCoordYInput||!manualResultXSpan||!manualResultYSpan){return}const sourceSystem=document.querySelector('input[name="manual-source-system"]:checked').value;const targetSystem=document.querySelector('input[name="manual-target-system"]:checked').value;const inputXValue=manualCoordXInput.value.trim().replace(',','.');const inputYValue=manualCoordYInput.value.trim().replace(',','.');if(inputXValue===''||inputYValue===''){manualResultXSpan.textContent='---';manualResultYSpan.textContent='---';return}const inputX=parseFloat(inputXValue);const inputY=parseFloat(inputYValue);const result=transformCoordinates(inputX,inputY,sourceSystem,targetSystem);manualResultXSpan.textContent=formatCoordinate(result.x);manualResultYSpan.textContent=formatCoordinate(result.y)}
-
 function displayRecords(records) {
     outputContainer.innerHTML = '';
     if (isLoading) {
@@ -151,10 +140,10 @@ function displayRecords(records) {
         const point = record.fields['Point'] || 'N/A';
         const info = record.fields['Info'] || 'N/A';
         const h = record.fields['H'] || 'N/A';
-        const targetCoords = getCoordsInTargetMode(record.fields, currentCoordMode);
-        const formattedX = formatCoordinate(targetCoords.x);
-        const formattedY = formatCoordinate(targetCoords.y);
-        const formattedH = formatCoordinate(h);
+        const targetCoords = groUtils.getCoordsInTargetMode(record.fields, currentCoordMode);
+        const formattedX = groUtils.formatCoordinate(targetCoords.x);
+        const formattedY = groUtils.formatCoordinate(targetCoords.y);
+        const formattedH = groUtils.formatCoordinate(h);
         let outputStringPart = `${currentSeparatorChar}${formattedX}${currentSeparatorChar}${formattedY}${currentSeparatorChar}${formattedH}${currentSeparatorChar}`;
         if (isNoteVisible) {
             outputStringPart += info;
@@ -170,7 +159,7 @@ function displayRecords(records) {
         lineDiv.appendChild(document.createTextNode(outputStringPart));
 
         if (typeof proj4 !== 'undefined') {
-            const mskCoords = getCoordsInTargetMode(record.fields, 'msk');
+            const mskCoords = groUtils.getCoordsInTargetMode(record.fields, 'msk');
             if (!isNaN(mskCoords.x) && !isNaN(mskCoords.y)) {
                 const sk42_x = mskCoords.x;
                 const sk42_y = mskCoords.y + 18000000;
@@ -206,7 +195,6 @@ function displayRecords(records) {
     outputContainer.appendChild(fragment);
 }
 
-function performSearch(){if(isLoading)return;const searchTerm=searchInput.value.trim();const searchModeToggle=document.querySelector('.search-mode-toggle input[name="search-mode"]:checked');const ignoreCharsToggle=document.querySelector('.ignore-chars-toggle input[name="ignore-mode"]:checked');shouldIgnoreChars=ignoreCharsToggle?ignoreCharsToggle.value==='on':!1;const searchMode=searchModeToggle?searchModeToggle.value:'contains';if(!searchTerm){currentDisplayRecords=[];displayRecords(currentDisplayRecords);return}messageState.textContent='Поиск в кэше...';messageState.style.display='block';outputContainer.style.display='none';messageState.classList.remove('error');const queryForComparison=shouldIgnoreChars?normalizePointValue(searchTerm):searchTerm.toLowerCase();currentDisplayRecords=fullDatabaseCache.filter(record=>{const rawFieldValue=record.fields['Point'];if(!rawFieldValue)return!1;const fieldValueForComparison=shouldIgnoreChars?normalizePointValue(rawFieldValue):rawFieldValue.toLowerCase();return searchMode==='exact'?fieldValueForComparison===queryForComparison:String(fieldValueForComparison).includes(String(queryForComparison))});displayRecords(currentDisplayRecords)}
 
 function findAndShowNearby(clickedRecordId) {
     if (nearbyPopupTitleEl) nearbyPopupTitleEl.textContent = `Точки рядом (до ${MAX_NEARBY_DISTANCE}м):`;
@@ -216,7 +204,7 @@ function findAndShowNearby(clickedRecordId) {
         console.error("Ref point not found:", clickedRecordId);
         return;
     }
-    const refCoords = getCoordsInTargetMode(referencePoint.fields, currentCoordMode);
+    const refCoords = groUtils.getCoordsInTargetMode(referencePoint.fields, currentCoordMode);
     if (isNaN(refCoords.x) || isNaN(refCoords.y)) {
         alert(`Невозможно рассчитать расстояние: у точки (${referencePoint.fields['Point']}) некорректные координаты для режима ${currentCoordMode}. Исходная: ${referencePoint.fields['CoordSystem']}`);
         return;
@@ -226,7 +214,7 @@ function findAndShowNearby(clickedRecordId) {
     const nearbyPoints = [];
     fullDatabaseCache.forEach(candidateRecord => {
         if (candidateRecord.id === clickedRecordId) return;
-        const candCoords = getCoordsInTargetMode(candidateRecord.fields, currentCoordMode);
+        const candCoords = groUtils.getCoordsInTargetMode(candidateRecord.fields, currentCoordMode);
         if (isNaN(candCoords.x) || isNaN(candCoords.y)) return;
         const deltaX = candCoords.x - refX;
         const deltaY = candCoords.y - refY;
@@ -238,7 +226,7 @@ function findAndShowNearby(clickedRecordId) {
     nearbyPoints.sort((a, b) => a.distance - b.distance);
     nearbyListContainer.innerHTML = '';
     const refPointData = referencePoint.fields;
-    let refOutputString = `${refPointData['Point'] || 'N/A'}${currentSeparatorChar}${formatCoordinate(refX)}${currentSeparatorChar}${formatCoordinate(refY)}${currentSeparatorChar}${formatCoordinate(refPointData['H'])}${currentSeparatorChar}`;
+    let refOutputString = `${refPointData['Point'] || 'N/A'}${currentSeparatorChar}${groUtils.formatCoordinate(refX)}${currentSeparatorChar}${groUtils.formatCoordinate(refY)}${currentSeparatorChar}${groUtils.formatCoordinate(refPointData['H'])}${currentSeparatorChar}`;
     if (isNoteVisible) refOutputString += (refPointData['Info'] || 'N/A');
     const refElement = document.createElement('div');
     refElement.className = 'reference-point';
@@ -268,7 +256,7 @@ function findNearbyUserLocation(latitude, longitude) {
         userSk42Coords = proj4("EPSG:4326", "EPSG:28418", [longitude, latitude]); // WGS84 lon,lat -> SK42 Y,X
         userMsk_x = userSk42Coords[1]; // SK42 X (Север)
         userMsk_y = userSk42Coords[0] - 18000000; // SK42 Y (Восток) -> МСК Y
-        userCoordsInCurrentMode = transformCoordinates(userMsk_x, userMsk_y, 'msk', currentCoordMode.toLowerCase());
+        userCoordsInCurrentMode = groUtils.transformCoordinates(userMsk_x, userMsk_y, 'msk', currentCoordMode.toLowerCase());
     } catch (e) {
         console.error("Ошибка преобразования координат пользователя:", e);
         alert("Не удалось преобразовать ваши координаты. Убедитесь, что proj4.js загружен корректно и определения систем координат верны.");
@@ -290,7 +278,7 @@ function findNearbyUserLocation(latitude, longitude) {
 
     const nearbyPointsToUser = [];
     fullDatabaseCache.forEach(candidateRecord => {
-        const candCoords = getCoordsInTargetMode(candidateRecord.fields, currentCoordMode);
+        const candCoords = groUtils.getCoordsInTargetMode(candidateRecord.fields, currentCoordMode);
         if (isNaN(candCoords.x) || isNaN(candCoords.y)) return;
 
         const deltaX = candCoords.x - userRefX;
@@ -311,7 +299,7 @@ function findNearbyUserLocation(latitude, longitude) {
 
     const userLocationHeader = document.createElement('div');
     userLocationHeader.className = 'reference-point';
-    userLocationHeader.innerHTML = `<strong>Ваше местоположение (в СК ${currentCoordMode.toUpperCase()}):</strong> X: ${formatCoordinate(userRefX)}, Y: ${formatCoordinate(userRefY)}`;
+    userLocationHeader.innerHTML = `<strong>Ваше местоположение (в СК ${currentCoordMode.toUpperCase()}):</strong> X: ${groUtils.formatCoordinate(userRefX)}, Y: ${groUtils.formatCoordinate(userRefY)}`;
     nearbyListContainer.appendChild(userLocationHeader);
 
     populateNearbyList(nearbyPointsToUser);
@@ -322,7 +310,7 @@ function populateNearbyList(nearbyPointsArray) {
     if (nearbyPointsArray.length > 0) {
         nearbyPointsArray.forEach(item => {
             const rd = item.record.fields;
-            let outStr = `${rd['Point'] || 'N/A'}${currentSeparatorChar}${formatCoordinate(item.calculatedX)}${currentSeparatorChar}${formatCoordinate(item.calculatedY)}${currentSeparatorChar}${formatCoordinate(rd['H'])}`;
+            let outStr = `${rd['Point'] || 'N/A'}${currentSeparatorChar}${groUtils.formatCoordinate(item.calculatedX)}${currentSeparatorChar}${groUtils.formatCoordinate(item.calculatedY)}${currentSeparatorChar}${groUtils.formatCoordinate(rd['H'])}`;
             // Примечание не добавляем в этот список по умолчанию, чтобы не перегружать
             // if (isNoteVisible) outStr += `${currentSeparatorChar}${rd['Info'] || 'N/A'}`;
 
@@ -332,12 +320,12 @@ function populateNearbyList(nearbyPointsArray) {
 
             const contentSpan = document.createElement('span');
             // Отображаем название, X и Y точки
-            contentSpan.innerHTML = `<span class="nearby-distance">(${item.distance.toFixed(1)}м)</span> ${rd['Point'] || 'N/A'}${currentSeparatorChar}${formatCoordinate(item.calculatedX)}${currentSeparatorChar}${formatCoordinate(item.calculatedY)}`;
+            contentSpan.innerHTML = `<span class="nearby-distance">(${item.distance.toFixed(1)}м)</span> ${rd['Point'] || 'N/A'}${currentSeparatorChar}${groUtils.formatCoordinate(item.calculatedX)}${currentSeparatorChar}${groUtils.formatCoordinate(item.calculatedY)}`;
             li.appendChild(contentSpan);
 
 
             if (typeof proj4 !== 'undefined') {
-                const pointMskCoords = getCoordsInTargetMode(rd, 'msk');
+                const pointMskCoords = groUtils.getCoordsInTargetMode(rd, 'msk');
                 if (!isNaN(pointMskCoords.x) && !isNaN(pointMskCoords.y)) {
                     const point_sk42_x = pointMskCoords.x;
                     const point_sk42_y = pointMskCoords.y + 18000000;
@@ -375,7 +363,7 @@ function populateNearbyList(nearbyPointsArray) {
 
 
 function closeNearbyPopup(){nearbyPopup.style.display='none';nearbyListContainer.innerHTML=''}
-async function fetchAllRecords(){isLoading=!0;messageState.textContent='Загрузка данных...';outputContainer.style.display='none';messageState.classList.remove('error');fullDatabaseCache=[];try{const nocacheUrl=`${GOOGLE_SHEET_CSV_URL}&_=${Date.now()}`;const response=await fetch(nocacheUrl);if(!response.ok)throw new Error(`Ошибка загрузки CSV: ${response.status}`);const csvText=await response.text();fullDatabaseCache=parseCSV(csvText);isLoading=!1;currentDisplayRecords=[];displayRecords(currentDisplayRecords)}catch(error){isLoading=!1;messageState.textContent=`Ошибка загрузки базы данных: ${error.message}. Попробуйте обновить.`;messageState.classList.add('error');messageState.style.display='block'}}
+async function fetchAllRecords(){isLoading=!0;messageState.textContent='Загрузка данных...';outputContainer.style.display='none';messageState.classList.remove('error');fullDatabaseCache=[];try{const nocacheUrl=`${GOOGLE_SHEET_CSV_URL}&_=${Date.now()}`;const response=await fetch(nocacheUrl);if(!response.ok)throw new Error(`Ошибка загрузки CSV: ${response.status}`);const csvText=await response.text();fullDatabaseCache=groUtils.parseCSV(csvText);isLoading=!1;currentDisplayRecords=[];displayRecords(currentDisplayRecords)}catch(error){isLoading=!1;messageState.textContent=`Ошибка загрузки базы данных: ${error.message}. Попробуйте обновить.`;messageState.classList.add('error');messageState.style.display='block'}}
 document.addEventListener('DOMContentLoaded',()=>{
     const geolocateButton = document.getElementById('geolocate-button');
     if (geolocateButton) {
@@ -426,7 +414,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         });
     }
 
-    const searchModeToggleButtons=document.querySelectorAll('.search-mode-toggle input[name="search-mode"]');const noteToggleButtons=document.querySelectorAll('.note-toggle input[name="note-mode"]');const ignoreCharsToggleButtons=document.querySelectorAll('.ignore-chars-toggle input[name="ignore-mode"]');const separatorToggleButtons=document.querySelectorAll('.separator-toggle input[name="separator-mode"]');closePopupButton=document.querySelector('.popup-close-btn');searchInput.addEventListener('input',()=>{clearTimeout(debounceTimer);debounceTimer=setTimeout(performSearch,DEBOUNCE_DELAY)});searchModeToggleButtons.forEach(r=>r.addEventListener('change',()=>{if(searchInput.value.trim())performSearch()}));searchCoordToggleButtons.forEach(r=>r.addEventListener('change',(e)=>{currentCoordMode=e.target.value;displayRecords(currentDisplayRecords)}));noteToggleButtons.forEach(r=>r.addEventListener('change',(e)=>{isNoteVisible=e.target.value==='on';displayRecords(currentDisplayRecords)}));ignoreCharsToggleButtons.forEach(r=>r.addEventListener('change',()=>{if(searchInput.value.trim())performSearch()}));separatorToggleButtons.forEach(r=>r.addEventListener('change',(e)=>{currentSeparatorChar=e.target.value==='space'?' ':',';displayRecords(currentDisplayRecords)}));outputContainer.addEventListener('click',(e)=>{if(e.target.classList.contains('point-link')){e.preventDefault();const recordId=e.target.dataset.id;if(recordId)findAndShowNearby(recordId);else console.error("No record ID on link.")}});if(nearbyPopup){nearbyPopup.addEventListener('click',(e)=>{if(e.target===nearbyPopup)closeNearbyPopup()})}if(closePopupButton){closePopupButton.addEventListener('click',closeNearbyPopup)}manualSourceSystemRadios=document.querySelectorAll('input[name="manual-source-system"]');manualTargetSystemRadios=document.querySelectorAll('input[name="manual-target-system"]');manualCoordXInput=document.getElementById('manual-coord-x');manualCoordYInput=document.getElementById('manual-coord-y');manualResultXSpan=document.getElementById('manual-conversion-result-x');manualResultYSpan=document.getElementById('manual-conversion-result-y');manualSourceSystemRadios.forEach(radio=>radio.addEventListener('change',updateManualConversion));manualTargetSystemRadios.forEach(radio=>radio.addEventListener('change',updateManualConversion));manualCoordXInput.addEventListener('input',updateManualConversion);manualCoordYInput.addEventListener('input',updateManualConversion);fetchAllRecords();updateManualConversion()});
+    const searchModeToggleButtons=document.querySelectorAll('.search-mode-toggle input[name="search-mode"]');const noteToggleButtons=document.querySelectorAll('.note-toggle input[name="note-mode"]');const ignoreCharsToggleButtons=document.querySelectorAll('.ignore-chars-toggle input[name="ignore-mode"]');const separatorToggleButtons=document.querySelectorAll('.separator-toggle input[name="separator-mode"]');closePopupButton=document.querySelector('.popup-close-btn');searchInput.addEventListener('input',()=>{clearTimeout(debounceTimer);debounceTimer=setTimeout(groUtils.performSearch,DEBOUNCE_DELAY)});searchModeToggleButtons.forEach(r=>r.addEventListener('change',()=>{if(searchInput.value.trim())groUtils.performSearch()}));searchCoordToggleButtons.forEach(r=>r.addEventListener('change',(e)=>{currentCoordMode=e.target.value;displayRecords(currentDisplayRecords)}));noteToggleButtons.forEach(r=>r.addEventListener('change',(e)=>{isNoteVisible=e.target.value==='on';displayRecords(currentDisplayRecords)}));ignoreCharsToggleButtons.forEach(r=>r.addEventListener('change',()=>{if(searchInput.value.trim())groUtils.performSearch()}));separatorToggleButtons.forEach(r=>r.addEventListener('change',(e)=>{currentSeparatorChar=e.target.value==='space'?' ':',';displayRecords(currentDisplayRecords)}));outputContainer.addEventListener('click',(e)=>{if(e.target.classList.contains('point-link')){e.preventDefault();const recordId=e.target.dataset.id;if(recordId)findAndShowNearby(recordId);else console.error("No record ID on link.")}});if(nearbyPopup){nearbyPopup.addEventListener('click',(e)=>{if(e.target===nearbyPopup)closeNearbyPopup()})}if(closePopupButton){closePopupButton.addEventListener('click',closeNearbyPopup)}manualSourceSystemRadios=document.querySelectorAll('input[name="manual-source-system"]');manualTargetSystemRadios=document.querySelectorAll('input[name="manual-target-system"]');manualCoordXInput=document.getElementById('manual-coord-x');manualCoordYInput=document.getElementById('manual-coord-y');manualResultXSpan=document.getElementById('manual-conversion-result-x');manualResultYSpan=document.getElementById('manual-conversion-result-y');manualSourceSystemRadios.forEach(radio=>radio.addEventListener('change',groUtils.updateManualConversion));manualTargetSystemRadios.forEach(radio=>radio.addEventListener('change',groUtils.updateManualConversion));manualCoordXInput.addEventListener('input',groUtils.updateManualConversion);manualCoordYInput.addEventListener('input',groUtils.updateManualConversion);fetchAllRecords();groUtils.updateManualConversion()});
 </script>
 </body>
 </html>

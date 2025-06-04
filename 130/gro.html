@@ -320,6 +320,7 @@
 			</div>
 		</section>
 	</div>
+<script src="/lib/gro-common.js"></script>
 
 	<script>
 		// --- НАСТРОЙКИ ---
@@ -353,48 +354,6 @@
 		const ignoreCharsToggleButtons = document.querySelectorAll('.ignore-chars-toggle input[name="ignore-mode"]');
 		const nearbyPopup = document.getElementById('nearby-popup');
 		const nearbyListContainer = document.getElementById('nearby-list');
-		// --- Вспомогательные функции ---
-		function formatCoordinate(value) {
-			if (value === null || typeof value === 'undefined') {
-				return 'N/A';
-			}
-			const num = parseFloat(value);
-			if (!isNaN(num)) {
-				return num.toFixed(3);
-			}
-			return value;
-		}
-
-		function normalizePointValue(str) {
-			if (!str) return '';
-			return str.toLowerCase().replace(/[\._,\-]/g, '');
-		}
-		// Функции getXss, getYss, getXmsk, getYmsk и константы K1, K2, X0_MSK, Y0_MSK УДАЛЕНЫ
-		// --- Парсер CSV ---
-		function parseCSV(csvText) {
-			const lines = csvText.trim().split('\n');
-			const records = lines.map((line, index) => {
-				const cleanedLine = line.trim();
-				if (!cleanedLine) return null;
-				const parts = cleanedLine.split(',');
-				if (parts.length >= 5) { // Убедимся, что есть все 5 ожидаемых колонок
-					return {
-						id: `gs_${index + 1}`,
-						fields: {
-							Point: parts[COL_INDEX.Point]?.trim() || '',
-							[BASE_X_FIELD_NAME]: parts[COL_INDEX.Xraw]?.trim() || '',
-							[BASE_Y_FIELD_NAME]: parts[COL_INDEX.Yraw]?.trim() || '',
-							H: parts[COL_INDEX.H]?.trim() || '',
-							Info: parts[COL_INDEX.Info]?.trim() || ''
-						}
-					};
-				} else {
-					console.warn(`Skipping malformed CSV line ${index + 1}: ${line}`);
-					return null;
-				}
-			}).filter(record => record !== null);
-			return records;
-		}
 		// --- Функция для отображения данных ---
 		function displayRecords(records) {
 			outputContainer.innerHTML = '';
@@ -428,9 +387,9 @@
 				// Используем координаты напрямую, без трансформации
 				const calculatedX = parseFloat(record.fields[BASE_X_FIELD_NAME]);
 				const calculatedY = parseFloat(record.fields[BASE_Y_FIELD_NAME]);
-				const formattedX = formatCoordinate(calculatedX);
-				const formattedY = formatCoordinate(calculatedY);
-				const formattedH = formatCoordinate(h);
+				const formattedX = groUtils.formatCoordinate(calculatedX);
+				const formattedY = groUtils.formatCoordinate(calculatedY);
+				const formattedH = groUtils.formatCoordinate(h);
 				let outputStringPart = `,${formattedX},${formattedY},${formattedH},`;
 				if (isNoteVisible) {
 					outputStringPart += info;
@@ -449,34 +408,6 @@
 			outputContainer.appendChild(fragment);
 		}
 		// --- Функция для КЛИЕНТСКОГО поиска в кэше ---
-		function performSearch() {
-			if (isLoading) return;
-			const searchTerm = searchInput.value.trim();
-			shouldIgnoreChars = document.querySelector('.ignore-chars-toggle input[name="ignore-mode"]:checked').value === 'on';
-			const searchMode = document.querySelector('.search-mode-toggle input[name="search-mode"]:checked').value;
-			if (!searchTerm) {
-				currentDisplayRecords = [];
-				displayRecords(currentDisplayRecords);
-				return;
-			}
-			messageState.textContent = 'Поиск в кэше...';
-			messageState.style.display = 'block';
-			messageState.classList.remove('error');
-			outputContainer.style.display = 'none';
-			const queryForComparison = shouldIgnoreChars ? normalizePointValue(searchTerm) : searchTerm.toLowerCase();
-			const filteredRecords = fullDatabaseCache.filter(record => {
-				const rawFieldValue = record.fields['Point'];
-				if (!rawFieldValue) return false;
-				const fieldValueForComparison = shouldIgnoreChars ? normalizePointValue(rawFieldValue) : rawFieldValue.toLowerCase();
-				if (searchMode === 'exact') {
-					return fieldValueForComparison === queryForComparison;
-				} else { // contains
-					return String(fieldValueForComparison).includes(String(queryForComparison));
-				}
-			});
-			currentDisplayRecords = filteredRecords;
-			displayRecords(currentDisplayRecords);
-		}
 		// --- Функция расчета расстояний и показа Pop-up ---
 		function findAndShowNearby(clickedRecordId) {
 			const referencePoint = fullDatabaseCache.find(r => r.id === clickedRecordId);
@@ -512,9 +443,9 @@
 			nearbyPoints.sort((a, b) => a.distance - b.distance);
 			nearbyListContainer.innerHTML = '';
 			const refPointData = referencePoint.fields;
-			const refFormattedX = formatCoordinate(refX);
-			const refFormattedY = formatCoordinate(refY);
-			const refFormattedH = formatCoordinate(refPointData['H']);
+			const refFormattedX = groUtils.formatCoordinate(refX);
+			const refFormattedY = groUtils.formatCoordinate(refY);
+			const refFormattedH = groUtils.formatCoordinate(refPointData['H']);
 			let refOutputString = `${refPointData['Point'] || 'N/A'},${refFormattedX},${refFormattedY},${refFormattedH},`;
 			if (isNoteVisible) {
 				refOutputString += (refPointData['Info'] || 'N/A');
@@ -528,9 +459,9 @@
 					const recordData = item.record.fields;
 					const point = recordData['Point'] || 'N/A';
 					const info = recordData['Info'] || 'N/A';
-					const formattedX = formatCoordinate(item.calculatedX); // Используем уже рассчитанные
-					const formattedY = formatCoordinate(item.calculatedY); // Используем уже рассчитанные
-					const formattedH = formatCoordinate(recordData['H']);
+					const formattedX = groUtils.formatCoordinate(item.calculatedX); // Используем уже рассчитанные
+					const formattedY = groUtils.formatCoordinate(item.calculatedY); // Используем уже рассчитанные
+					const formattedH = groUtils.formatCoordinate(recordData['H']);
 					let outputString = `${point},${formattedX},${formattedY},${formattedH},`;
 					if (isNoteVisible) {
 						outputString += info;
@@ -567,7 +498,7 @@
 					throw new Error(`Ошибка загрузки CSV: ${response.status} ${response.statusText}`);
 				}
 				const csvText = await response.text();
-				fullDatabaseCache = parseCSV(csvText);
+				fullDatabaseCache = groUtils.parseCSV(csvText);
 				isLoading = false;
 				currentDisplayRecords = [];
 				displayRecords(currentDisplayRecords);
@@ -582,12 +513,12 @@
 		// --- Обработчики событий ---
 		searchInput.addEventListener('input', () => {
 			clearTimeout(debounceTimer);
-			debounceTimer = setTimeout(performSearch, DEBOUNCE_DELAY);
+			debounceTimer = setTimeout(groUtils.performSearch, DEBOUNCE_DELAY);
 		});
 		searchModeToggleButtons.forEach(radio => {
 			radio.addEventListener('change', () => {
 				if (searchInput.value.trim() !== '') {
-					performSearch();
+					groUtils.performSearch();
 				}
 			});
 		});
@@ -601,7 +532,7 @@
 		ignoreCharsToggleButtons.forEach(radio => {
 			radio.addEventListener('change', () => {
 				if (searchInput.value.trim() !== '') {
-					performSearch();
+					groUtils.performSearch();
 				}
 			});
 		});
