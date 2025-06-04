@@ -387,9 +387,9 @@
 				// Используем координаты напрямую, без трансформации
 				const calculatedX = parseFloat(record.fields[BASE_X_FIELD_NAME]);
 				const calculatedY = parseFloat(record.fields[BASE_Y_FIELD_NAME]);
-				const formattedX = formatCoordinate(calculatedX);
-				const formattedY = formatCoordinate(calculatedY);
-				const formattedH = formatCoordinate(h);
+				const formattedX = groUtils.formatCoordinate(calculatedX);
+				const formattedY = groUtils.formatCoordinate(calculatedY);
+				const formattedH = groUtils.formatCoordinate(h);
 				let outputStringPart = `,${formattedX},${formattedY},${formattedH},`;
 				if (isNoteVisible) {
 					outputStringPart += info;
@@ -443,9 +443,9 @@
 			nearbyPoints.sort((a, b) => a.distance - b.distance);
 			nearbyListContainer.innerHTML = '';
 			const refPointData = referencePoint.fields;
-			const refFormattedX = formatCoordinate(refX);
-			const refFormattedY = formatCoordinate(refY);
-			const refFormattedH = formatCoordinate(refPointData['H']);
+			const refFormattedX = groUtils.formatCoordinate(refX);
+			const refFormattedY = groUtils.formatCoordinate(refY);
+			const refFormattedH = groUtils.formatCoordinate(refPointData['H']);
 			let refOutputString = `${refPointData['Point'] || 'N/A'},${refFormattedX},${refFormattedY},${refFormattedH},`;
 			if (isNoteVisible) {
 				refOutputString += (refPointData['Info'] || 'N/A');
@@ -459,9 +459,9 @@
 					const recordData = item.record.fields;
 					const point = recordData['Point'] || 'N/A';
 					const info = recordData['Info'] || 'N/A';
-					const formattedX = formatCoordinate(item.calculatedX); // Используем уже рассчитанные
-					const formattedY = formatCoordinate(item.calculatedY); // Используем уже рассчитанные
-					const formattedH = formatCoordinate(recordData['H']);
+					const formattedX = groUtils.formatCoordinate(item.calculatedX); // Используем уже рассчитанные
+					const formattedY = groUtils.formatCoordinate(item.calculatedY); // Используем уже рассчитанные
+					const formattedH = groUtils.formatCoordinate(recordData['H']);
 					let outputString = `${point},${formattedX},${formattedY},${formattedH},`;
 					if (isNoteVisible) {
 						outputString += info;
@@ -498,7 +498,7 @@
 					throw new Error(`Ошибка загрузки CSV: ${response.status} ${response.statusText}`);
 				}
 				const csvText = await response.text();
-				fullDatabaseCache = parseCSV(csvText);
+				fullDatabaseCache = groUtils.parseCSV(csvText);
 				isLoading = false;
 				currentDisplayRecords = [];
 				displayRecords(currentDisplayRecords);
@@ -513,12 +513,12 @@
 		// --- Обработчики событий ---
 		searchInput.addEventListener('input', () => {
 			clearTimeout(debounceTimer);
-			debounceTimer = setTimeout(performSearch, DEBOUNCE_DELAY);
+			debounceTimer = setTimeout(groUtils.performSearch, DEBOUNCE_DELAY);
 		});
 		searchModeToggleButtons.forEach(radio => {
 			radio.addEventListener('change', () => {
 				if (searchInput.value.trim() !== '') {
-					performSearch();
+					groUtils.performSearch();
 				}
 			});
 		});
@@ -532,7 +532,7 @@
 		ignoreCharsToggleButtons.forEach(radio => {
 			radio.addEventListener('change', () => {
 				if (searchInput.value.trim() !== '') {
-					performSearch();
+					groUtils.performSearch();
 				}
 			});
 		});
