@@ -1,4 +1,4 @@
-// app.js - Обновленный главный модуль
+// app.js - Обновленный главный модуль (убираем разделитель)
 import { CoordinateSystem } from './modules/coordinates.js';
 import { DataManager } from './modules/dataManager.js';
 import { UIController } from './modules/uiController.js';
@@ -17,10 +17,8 @@ class GROApp {
             fullDatabase: [],
             displayedRecords: [],
             currentCoordMode: 'izp',
-            isNoteVisible: true, // Всегда true
             shouldIgnoreChars: false,
             searchMode: 'contains',
-            separatorChar: ',',
             isLoading: false
         };
     }
@@ -72,14 +70,9 @@ class GROApp {
     }
     
     updateSettings(settings) {
-        // Примечания всегда видны
-        if (settings.isNoteVisible !== undefined) {
-            settings.isNoteVisible = true;
-        }
-        
         Object.assign(this.state, settings);
         
-        if (settings.currentCoordMode !== undefined || settings.separatorChar !== undefined) {
+        if (settings.currentCoordMode !== undefined) {
             this.uiController.displayRecords(this.state.displayedRecords);
         }
     }
