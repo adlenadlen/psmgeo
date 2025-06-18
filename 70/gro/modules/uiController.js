@@ -7,7 +7,7 @@ export class UIController {
         this.coordSystem = new CoordinateSystem();
         this.elements = {};
         this.debounceTimer = null;
-        this.popupHistory = []; // История для кнопки "Назад"
+        this.popupHistory = [];
     }
     
     init() {
@@ -47,15 +47,6 @@ export class UIController {
                     <label for="toggleMsk">МСК</label>
                     <input id="toggleGfu" name="coordSystem" type="radio" value="gfu">
                     <label for="toggleGfu">ГФУ</label>
-                </div>
-            </div>
-            <div class="control-row">
-                <span class="control-label">Примечание:</span>
-                <div class="note-toggle">
-                    <input id="noteOn" name="noteMode" type="radio" value="on" checked>
-                    <label for="noteOn">Вкл</label>
-                    <input id="noteOff" name="noteMode" type="radio" value="off">
-                    <label for="noteOff">Выкл</label>
                 </div>
             </div>
             <div class="control-row">
@@ -152,12 +143,6 @@ export class UIController {
             });
         });
         
-        document.querySelectorAll('input[name="noteMode"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                this.app.updateSettings({ isNoteVisible: e.target.value === 'on' });
-            });
-        });
-        
         document.querySelectorAll('input[name="searchMode"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
                 this.app.updateSettings({ searchMode: e.target.value });
@@ -187,12 +172,17 @@ export class UIController {
             this.app.findNearbyUserLocation();
         });
         
-        // Клики по точкам в основном списке
+        // Клики по записям в основном списке
         this.elements.outputList.addEventListener('click', (e) => {
-            const pointName = e.target.closest('.point-name');
-            if (pointName) {
+            // Проверяем, что клик не по ссылкам карт
+            if (e.target.classList.contains('map-link')) {
+                return;
+            }
+            
+            const outputLine = e.target.closest('.output-line');
+            if (outputLine) {
                 e.preventDefault();
-                const recordId = pointName.dataset.id;
+                const recordId = outputLine.dataset.recordId;
                 const record = this.app.state.fullDatabase.find(r => r.id === recordId);
                 if (record) {
                     this.showPointDetails(record);
@@ -274,63 +264,84 @@ export class UIController {
         this.elements.outputList.appendChild(fragment);
     }
     
-    createRecordElement(record) {
+    createRecordElement(record, showDistance = false, distance = null) {
         const div = document.createElement('div');
         div.className = 'output-line';
+        div.dataset.recordId = record.id;
         
         const fields = record.fields;
         
-        // Название точки (кликабельное)
+        // Контейнер для основной информации
+        const infoContainer = document.createElement('div');
+        infoContainer.className = 'info-container';
+        
+        // Расстояние (если нужно показывать)
+        if (showDistance && distance !== null) {
+            const distanceSpan = document.createElement('span');
+            distanceSpan.className = 'nearby-distance';
+            distanceSpan.textContent = `${distance.toFixed(1)}м`;
+            infoContainer.appendChild(distanceSpan);
+        }
+        
+        // Название точки
         const pointName = document.createElement('span');
         pointName.className = 'point-name';
         pointName.textContent = fields.Point || 'N/A';
-        pointName.dataset.id = record.id;
-        div.appendChild(pointName);
+        infoContainer.appendChild(pointName);
         
-        // Примечание (если включено)
-        if (this.app.state.isNoteVisible && fields.Info) {
+        // Примечание
+        if (fields.Info) {
             const info = document.createElement('span');
             info.className = 'point-info';
             info.textContent = fields.Info;
-            div.appendChild(info);
+            infoContainer.appendChild(info);
         }
         
-        // Кнопки карт
-        const mapLinks = document.createElement('div');
-        mapLinks.className = 'map-links';
+        div.appendChild(infoContainer);
         
+        // Кнопки карт
+        const mapLinks = this.createMapLinks(fields);
+        if (mapLinks) {
+            div.appendChild(mapLinks);
+        }
+        
+        return div;
+    }
+    
+    createMapLinks(fields) {
         const wgsCoords = this.coordSystem.toWGS84(
             fields.Xraw,
             fields.Yraw,
             fields.CoordSystem.toLowerCase()
         );
         
-        if (wgsCoords) {
-            const googleLink = document.createElement('a');
-            googleLink.href = `https://www.google.com/maps?q=${wgsCoords.lat},${wgsCoords.lon}`;
-            googleLink.textContent = 'G';
-            googleLink.className = 'map-link';
-            googleLink.target = '_blank';
-            googleLink.title = 'Google Карты';
-            mapLinks.appendChild(googleLink);
-            
-            const yandexLink = document.createElement('a');
-            yandexLink.href = `https://yandex.ru/maps/?pt=${wgsCoords.lon},${wgsCoords.lat}&z=18&l=map`;
-            yandexLink.textContent = 'Я';
-            yandexLink.className = 'map-link';
-            yandexLink.target = '_blank';
-            yandexLink.title = 'Яндекс Карты';
-            mapLinks.appendChild(yandexLink);
-        }
+        if (!wgsCoords) return null;
         
-        div.appendChild(mapLinks);
+        const mapLinks = document.createElement('div');
+        mapLinks.className = 'map-links';
         
-        return div;
+        const googleLink = document.createElement('a');
+        googleLink.href = `https://www.google.com/maps?q=${wgsCoords.lat},${wgsCoords.lon}`;
+        googleLink.textContent = 'G';
+        googleLink.className = 'map-link b';
+        googleLink.target = '_blank';
+        googleLink.title = 'Google Карты';
+        mapLinks.appendChild(googleLink);
+        
+        const yandexLink = document.createElement('a');
+        yandexLink.href = `https://yandex.ru/maps/?pt=${wgsCoords.lon},${wgsCoords.lat}&z=18&l=map`;
+        yandexLink.textContent = 'Я';
+        yandexLink.className = 'map-link b';
+        yandexLink.target = '_blank';
+        yandexLink.title = 'Яндекс Карты';
+        mapLinks.appendChild(yandexLink);
+        
+        return mapLinks;
     }
     
     showPointDetails(record, addToHistory = true) {
         if (addToHistory) {
-            this.popupHistory = []; // Сбрасываем историю при открытии новой точки
+            this.popupHistory = [];
         }
         
         const fields = record.fields;
@@ -384,10 +395,16 @@ export class UIController {
         // Примечание
         if (fields.Info) {
             const info = document.createElement('div');
-            info.style.marginTop = 'var(--spacing-unit)';
-            info.style.opacity = '0.8';
+            info.className = 'popup-info';
             info.textContent = fields.Info;
             header.appendChild(info);
+        }
+        
+        // Кнопки карт
+        const mapLinks = this.createMapLinks(fields);
+        if (mapLinks) {
+            mapLinks.className = 'map-links popup-map-links';
+            header.appendChild(mapLinks);
         }
         
         popupContent.appendChild(header);
@@ -433,33 +450,25 @@ export class UIController {
         
         if (nearbyPoints.length === 0) {
             const noResults = document.createElement('div');
-            noResults.style.opacity = '0.7';
+            noResults.className = 'no-results';
             noResults.textContent = 'Поблизости нет других точек';
             container.appendChild(noResults);
             return;
         }
         
         nearbyPoints.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'nearby-item';
-            
-            const distance = document.createElement('span');
-            distance.className = 'nearby-distance';
-            distance.textContent = `${item.distance.toFixed(1)}м`;
-            div.appendChild(distance);
-            
-            const name = document.createElement('span');
-            name.className = 'nearby-name';
-            name.textContent = item.record.fields.Point || 'N/A';
-            div.appendChild(name);
+            const element = this.createRecordElement(item.record, true, item.distance);
             
             // При клике показываем детали этой точки
-            div.addEventListener('click', () => {
+            element.addEventListener('click', (e) => {
+                if (e.target.classList.contains('map-link')) {
+                    return;
+                }
                 this.popupHistory.push(currentRecord);
                 this.showPointDetails(item.record, false);
             });
             
-            container.appendChild(div);
+            container.appendChild(element);
         });
     }
     
@@ -508,30 +517,22 @@ export class UIController {
         
         if (result.points.length === 0) {
             const noResults = document.createElement('div');
-            noResults.style.opacity = '0.7';
+            noResults.className = 'no-results';
             noResults.textContent = 'Поблизости нет точек';
             nearbyList.appendChild(noResults);
         } else {
             result.points.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'nearby-item';
-                
-                const distance = document.createElement('span');
-                distance.className = 'nearby-distance';
-                distance.textContent = `${item.distance.toFixed(1)}м`;
-                div.appendChild(distance);
-                
-                const name = document.createElement('span');
-                name.className = 'nearby-name';
-                name.textContent = item.record.fields.Point || 'N/A';
-                div.appendChild(name);
+                const element = this.createRecordElement(item.record, true, item.distance);
                 
                 // При клике показываем детали точки
-                div.addEventListener('click', () => {
+                element.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('map-link')) {
+                        return;
+                    }
                     this.showPointDetails(item.record);
                 });
                 
-                nearbyList.appendChild(div);
+                nearbyList.appendChild(element);
             });
         }
         
@@ -543,7 +544,7 @@ export class UIController {
         this.elements.nearbyPopup.appendChild(popupContent);
         this.elements.nearbyPopup.style.display = 'flex';
         
-        this.popupHistory = []; // Сбрасываем историю
+        this.popupHistory = [];
     }
     
     goBack() {
