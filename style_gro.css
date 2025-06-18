@@ -56,15 +56,17 @@ input[type="radio"]:checked + label {
     font-weight: 600;
 }
 
-/* Строка поиска */
+/* Строка поиска - всегда в одну линию */
 .search-row {
     display: flex;
     gap: var(--spacing-unit);
     align-items: center;
+    width: 100%;
 }
 
 .search-input {
     flex: 1;
+    min-width: 0; /* Позволяет сжиматься */
     padding: calc(var(--spacing-unit) * 1.2) calc(var(--spacing-unit) * 2);
     border: none;
     border-radius: 20px;
@@ -78,10 +80,11 @@ input[type="radio"]:checked + label {
     outline-offset: 2px;
 }
 
-/* Кнопка геолокации */
+/* Кнопка геолокации - контрастная */
 .geolocate-button {
     width: 45px;
     height: 45px;
+    min-width: 45px;
     padding: 0;
     font-size: 1.3rem;
     border-radius: 50%;
@@ -89,6 +92,12 @@ input[type="radio"]:checked + label {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    background-color: var(--text-color) !important;
+    color: var(--background-color) !important;
+}
+
+.geolocate-button:hover {
+    opacity: 0.8;
 }
 
 /* Контейнер данных */
@@ -153,13 +162,44 @@ input[type="radio"]:checked + label {
     flex-shrink: 0;
 }
 
+/* Кнопки карт - улучшенное выравнивание */
 .map-link {
     width: 32px;
     height: 32px;
+    min-width: 32px;
     padding: 0;
     font-size: 0.9rem;
     font-weight: 600;
     border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1;
+    background-color: var(--text-color) !important;
+    color: var(--background-color) !important;
+    text-decoration: none;
+}
+
+.map-link:hover {
+    transform: scale(1.1);
+    opacity: 0.8;
+}
+
+/* Кнопки в секции данных */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-unit);
+}
+
+.action-buttons .b {
+    background-color: var(--text-color);
+    color: var(--background-color);
+}
+
+.action-buttons .b:hover {
+    opacity: 0.8;
 }
 
 /* Попап */
@@ -213,6 +253,11 @@ input[type="radio"]:checked + label {
 
 .popup-map-links {
     margin-bottom: calc(var(--spacing-unit) * 2);
+}
+
+.popup-map-links .map-link {
+    background-color: var(--button-background-color) !important;
+    color: var(--text-color) !important;
 }
 
 .popup-close-btn,
@@ -294,16 +339,9 @@ input[type="radio"]:checked + label {
     font-size: 1.1rem;
 }
 
-/* Секция с кнопками данных */
-.action-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-unit);
-}
-
 /* Адаптивность */
 @media (max-width: 425px) {
-    .control-row {
+    .control-row:not(.search-row) {
         flex-direction: column;
         align-items: stretch;
     }
@@ -334,6 +372,11 @@ input[type="radio"]:checked + label {
     
     .manual-coord-input {
         width: 100%;
+    }
+    
+    /* Строка поиска остается горизонтальной */
+    .search-row {
+        flex-direction: row !important;
     }
 }
 
