@@ -14,7 +14,6 @@
     align-items: center;
     margin-bottom: calc(var(--spacing-unit) * 1.5);
     gap: calc(var(--spacing-unit) * 1.5);
-    flex-wrap: wrap;
 }
 
 .control-row:last-child {
@@ -30,8 +29,7 @@
 /* Радио-переключатели */
 .coord-toggle,
 .search-mode-toggle,
-.ignore-chars-toggle,
-.separator-toggle {
+.ignore-chars-toggle {
     display: flex;
     gap: var(--spacing-unit);
     background: var(--background-color);
@@ -41,8 +39,7 @@
 
 .coord-toggle label,
 .search-mode-toggle label,
-.ignore-chars-toggle label,
-.separator-toggle label {
+.ignore-chars-toggle label {
     padding: calc(var(--spacing-unit) * 0.5) calc(var(--spacing-unit) * 1.2);
     border-radius: 8px;
     cursor: pointer;
@@ -59,7 +56,13 @@ input[type="radio"]:checked + label {
     font-weight: 600;
 }
 
-/* Поле поиска */
+/* Строка поиска */
+.search-row {
+    display: flex;
+    gap: var(--spacing-unit);
+    align-items: center;
+}
+
 .search-input {
     flex: 1;
     padding: calc(var(--spacing-unit) * 1.2) calc(var(--spacing-unit) * 2);
@@ -68,12 +71,24 @@ input[type="radio"]:checked + label {
     font-size: 1.1rem;
     background: var(--background-color);
     color: var(--text-color);
-    width: 100%;
 }
 
 .search-input:focus {
     outline: 2px solid var(--text-color);
     outline-offset: 2px;
+}
+
+/* Кнопка геолокации */
+.geolocate-button {
+    width: 45px;
+    height: 45px;
+    padding: 0;
+    font-size: 1.3rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 /* Контейнер данных */
@@ -103,10 +118,9 @@ input[type="radio"]:checked + label {
 .output-line {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: calc(var(--spacing-unit) * 1.5);
-    padding: calc(var(--spacing-unit) * 1.5);
-    margin-bottom: var(--spacing-unit);
+    gap: calc(var(--spacing-unit) * 1.2);
+    padding: calc(var(--spacing-unit) * 1.2);
+    margin-bottom: calc(var(--spacing-unit) * 0.8);
     background: var(--button-background-color);
     border-radius: 12px;
     cursor: pointer;
@@ -122,43 +136,30 @@ input[type="radio"]:checked + label {
     transform: translateY(0);
 }
 
-.info-container {
-    display: flex;
-    align-items: center;
-    gap: calc(var(--spacing-unit) * 1.5);
-    flex: 1;
-}
-
 .point-name {
     font-weight: 600;
-    font-size: 1.1rem;
     flex-shrink: 0;
 }
 
 .point-info {
-    opacity: 0.8;
+    opacity: 0.7;
     font-size: 0.95rem;
+    flex: 1;
 }
 
 .map-links {
     display: flex;
-    gap: calc(var(--spacing-unit) * 0.8);
+    gap: calc(var(--spacing-unit) * 0.5);
     flex-shrink: 0;
 }
 
 .map-link {
-    min-width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    border-radius: 50%;
-}
-
-.map-link:hover {
-    transform: scale(1.1);
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 10px;
 }
 
 /* Попап */
@@ -193,7 +194,13 @@ input[type="radio"]:checked + label {
 .popup-title {
     font-size: 1.8rem;
     font-weight: 600;
-    margin-bottom: var(--spacing-unit);
+    margin-bottom: calc(var(--spacing-unit) * 0.5);
+}
+
+.popup-subtitle {
+    font-size: 1rem;
+    opacity: 0.6;
+    margin-bottom: calc(var(--spacing-unit) * 1.5);
 }
 
 .popup-coordinates {
@@ -201,11 +208,7 @@ input[type="radio"]:checked + label {
     font-size: 1.1rem;
     opacity: 0.8;
     margin-bottom: calc(var(--spacing-unit) * 1.5);
-}
-
-.popup-info {
-    margin-bottom: calc(var(--spacing-unit) * 1.5);
-    opacity: 0.8;
+    line-height: 1.8;
 }
 
 .popup-map-links {
@@ -253,13 +256,14 @@ input[type="radio"]:checked + label {
 }
 
 .nearby-list .output-line {
-    margin-bottom: calc(var(--spacing-unit) * 0.8);
+    padding: calc(var(--spacing-unit) * 1);
 }
 
 .nearby-distance {
     font-weight: 600;
     opacity: 0.7;
-    min-width: 60px;
+    min-width: 50px;
+    flex-shrink: 0;
 }
 
 .no-results {
@@ -290,15 +294,15 @@ input[type="radio"]:checked + label {
     font-size: 1.1rem;
 }
 
-/* Кнопка геолокации */
-.geolocate-button {
-    width: 100%;
-    padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 3);
-    font-size: 1.1rem;
+/* Секция с кнопками данных */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-unit);
 }
 
 /* Адаптивность */
-@media (max-width: 768px) {
+@media (max-width: 425px) {
     .control-row {
         flex-direction: column;
         align-items: stretch;
@@ -309,27 +313,27 @@ input[type="radio"]:checked + label {
         margin-bottom: calc(var(--spacing-unit) * 0.5);
     }
     
+    .coord-toggle,
+    .search-mode-toggle,
+    .ignore-chars-toggle {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .coord-toggle label,
+    .search-mode-toggle label,
+    .ignore-chars-toggle label {
+        flex: 1;
+        text-align: center;
+    }
+    
     .popup-content {
         margin: var(--spacing-unit);
         padding: calc(var(--spacing-unit) * 2);
     }
     
-    .output-line {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-unit);
-    }
-    
-    .info-container {
-        flex-direction: column;
-        align-items: flex-start;
+    .manual-coord-input {
         width: 100%;
-    }
-    
-    .map-links {
-        align-self: flex-end;
-        width: 100%;
-        justify-content: flex-end;
     }
 }
 
