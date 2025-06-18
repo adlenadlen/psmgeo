@@ -67,20 +67,9 @@ export class UIController {
                     <label for="ignoreOn">Вкл</label>
                 </div>
             </div>
-            <div class="control-row">
-                <span class="control-label">Разделитель:</span>
-                <div class="separator-toggle">
-                    <input id="separatorComma" name="separatorMode" type="radio" value="comma" checked>
-                    <label for="separatorComma">Запятая</label>
-                    <input id="separatorSpace" name="separatorMode" type="radio" value="space">
-                    <label for="separatorSpace">Пробел</label>
-                </div>
-            </div>
-            <div class="control-row">
-                <button id="geolocateButton" class="b geolocate-button">📍 Поиск по геолокации</button>
-            </div>
-            <div class="control-row">
+            <div class="control-row search-row">
                 <input id="searchInput" type="text" placeholder="Поиск по названию..." class="search-input">
+                <button id="geolocateButton" class="b geolocate-button" title="Поиск по геолокации">📍</button>
             </div>
         `;
     }
@@ -161,12 +150,6 @@ export class UIController {
             });
         });
         
-        document.querySelectorAll('input[name="separatorMode"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                this.app.updateSettings({ separatorChar: e.target.value === 'space' ? ' ' : ',' });
-            });
-        });
-        
         // Геолокация
         document.getElementById('geolocateButton').addEventListener('click', () => {
             this.app.findNearbyUserLocation();
@@ -174,7 +157,6 @@ export class UIController {
         
         // Клики по записям в основном списке
         this.elements.outputList.addEventListener('click', (e) => {
-            // Проверяем, что клик не по ссылкам карт
             if (e.target.classList.contains('map-link')) {
                 return;
             }
@@ -271,33 +253,27 @@ export class UIController {
         
         const fields = record.fields;
         
-        // Контейнер для основной информации
-        const infoContainer = document.createElement('div');
-        infoContainer.className = 'info-container';
-        
         // Расстояние (если нужно показывать)
         if (showDistance && distance !== null) {
             const distanceSpan = document.createElement('span');
             distanceSpan.className = 'nearby-distance';
             distanceSpan.textContent = `${distance.toFixed(1)}м`;
-            infoContainer.appendChild(distanceSpan);
+            div.appendChild(distanceSpan);
         }
         
         // Название точки
         const pointName = document.createElement('span');
         pointName.className = 'point-name';
         pointName.textContent = fields.Point || 'N/A';
-        infoContainer.appendChild(pointName);
+        div.appendChild(pointName);
         
         // Примечание
         if (fields.Info) {
             const info = document.createElement('span');
             info.className = 'point-info';
             info.textContent = fields.Info;
-            infoContainer.appendChild(info);
+            div.appendChild(info);
         }
-        
-        div.appendChild(infoContainer);
         
         // Кнопки карт
         const mapLinks = this.createMapLinks(fields);
@@ -352,8 +328,6 @@ export class UIController {
             this.app.state.currentCoordMode
         );
         
-        const sep = this.app.state.separatorChar;
-        
         // Создаем содержимое попапа
         const popupContent = document.createElement('div');
         popupContent.className = 'popup-content';
@@ -382,23 +356,23 @@ export class UIController {
         title.textContent = fields.Point || 'N/A';
         header.appendChild(title);
         
+        // Примечание
+        if (fields.Info) {
+            const subtitle = document.createElement('div');
+            subtitle.className = 'popup-subtitle';
+            subtitle.textContent = fields.Info;
+            header.appendChild(subtitle);
+        }
+        
         // Координаты
         const coordsDiv = document.createElement('div');
         coordsDiv.className = 'popup-coordinates';
         coordsDiv.innerHTML = `
-            X: ${this.formatCoordinate(coords.x)}${sep}
-            Y: ${this.formatCoordinate(coords.y)}${sep}
-            H: ${this.formatCoordinate(fields.H)}
+            <strong>X:</strong> ${this.formatCoordinate(coords.x)}<br>
+            <strong>Y:</strong> ${this.formatCoordinate(coords.y)}<br>
+            <strong>H:</strong> ${this.formatCoordinate(fields.H)}
         `;
         header.appendChild(coordsDiv);
-        
-        // Примечание
-        if (fields.Info) {
-            const info = document.createElement('div');
-            info.className = 'popup-info';
-            info.textContent = fields.Info;
-            header.appendChild(info);
-        }
         
         // Кнопки карт
         const mapLinks = this.createMapLinks(fields);
@@ -439,7 +413,6 @@ export class UIController {
         this.elements.nearbyPopup.appendChild(popupContent);
         this.elements.nearbyPopup.style.display = 'flex';
         
-        // Добавляем в историю
         if (addToHistory) {
             this.popupHistory.push(record);
         }
@@ -459,7 +432,6 @@ export class UIController {
         nearbyPoints.forEach(item => {
             const element = this.createRecordElement(item.record, true, item.distance);
             
-            // При клике показываем детали этой точки
             element.addEventListener('click', (e) => {
                 if (e.target.classList.contains('map-link')) {
                     return;
@@ -473,7 +445,6 @@ export class UIController {
     }
     
     showNearbyLocationPopup(result, userCoords) {
-        // Создаем содержимое попапа
         const popupContent = document.createElement('div');
         popupContent.className = 'popup-content';
         
@@ -483,7 +454,6 @@ export class UIController {
         closeBtn.title = 'Закрыть';
         popupContent.appendChild(closeBtn);
         
-        // Заголовок
         const header = document.createElement('div');
         header.className = 'popup-header';
         
@@ -496,14 +466,13 @@ export class UIController {
         coordsDiv.className = 'popup-coordinates';
         coordsDiv.innerHTML = `
             Ваше местоположение (${this.app.state.currentCoordMode.toUpperCase()}):<br>
-            X: ${this.formatCoordinate(result.userCoords.x)}, 
-            Y: ${this.formatCoordinate(result.userCoords.y)}
+            <strong>X:</strong> ${this.formatCoordinate(result.userCoords.x)}<br>
+            <strong>Y:</strong> ${this.formatCoordinate(result.userCoords.y)}
         `;
         header.appendChild(coordsDiv);
         
         popupContent.appendChild(header);
         
-        // Ближайшие точки
         const nearbySection = document.createElement('div');
         nearbySection.className = 'nearby-section';
         
@@ -524,7 +493,6 @@ export class UIController {
             result.points.forEach(item => {
                 const element = this.createRecordElement(item.record, true, item.distance);
                 
-                // При клике показываем детали точки
                 element.addEventListener('click', (e) => {
                     if (e.target.classList.contains('map-link')) {
                         return;
@@ -539,7 +507,6 @@ export class UIController {
         nearbySection.appendChild(nearbyList);
         popupContent.appendChild(nearbySection);
         
-        // Показываем попап
         this.elements.nearbyPopup.innerHTML = '';
         this.elements.nearbyPopup.appendChild(popupContent);
         this.elements.nearbyPopup.style.display = 'flex';
