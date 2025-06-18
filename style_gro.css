@@ -29,7 +29,6 @@
 
 /* Радио-переключатели */
 .coord-toggle,
-.note-toggle,
 .search-mode-toggle,
 .ignore-chars-toggle,
 .separator-toggle {
@@ -41,7 +40,6 @@
 }
 
 .coord-toggle label,
-.note-toggle label,
 .search-mode-toggle label,
 .ignore-chars-toggle label,
 .separator-toggle label {
@@ -105,47 +103,58 @@ input[type="radio"]:checked + label {
 .output-line {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: calc(var(--spacing-unit) * 1.5);
     padding: calc(var(--spacing-unit) * 1.5);
     margin-bottom: var(--spacing-unit);
     background: var(--button-background-color);
     border-radius: 12px;
-    transition: background-color 0.2s ease;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .output-line:hover {
     background-color: var(--button-hover-background-color);
+    transform: translateY(-1px);
+}
+
+.output-line:active {
+    transform: translateY(0);
+}
+
+.info-container {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing-unit) * 1.5);
+    flex: 1;
 }
 
 .point-name {
     font-weight: 600;
     font-size: 1.1rem;
-    cursor: pointer;
     flex-shrink: 0;
 }
 
 .point-info {
-    flex: 1;
     opacity: 0.8;
     font-size: 0.95rem;
 }
 
 .map-links {
     display: flex;
-    gap: calc(var(--spacing-unit) * 0.5);
+    gap: calc(var(--spacing-unit) * 0.8);
+    flex-shrink: 0;
 }
 
 .map-link {
+    min-width: 40px;
+    height: 40px;
+    padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: var(--background-color);
-    text-decoration: none;
-    font-weight: 600;
-    transition: transform 0.2s ease;
+    font-size: 1.1rem;
+    border-radius: 50%;
 }
 
 .map-link:hover {
@@ -191,6 +200,15 @@ input[type="radio"]:checked + label {
     font-family: var(--mono-font);
     font-size: 1.1rem;
     opacity: 0.8;
+    margin-bottom: calc(var(--spacing-unit) * 1.5);
+}
+
+.popup-info {
+    margin-bottom: calc(var(--spacing-unit) * 1.5);
+    opacity: 0.8;
+}
+
+.popup-map-links {
     margin-bottom: calc(var(--spacing-unit) * 2);
 }
 
@@ -234,20 +252,8 @@ input[type="radio"]:checked + label {
     opacity: 0.8;
 }
 
-.nearby-item {
-    display: flex;
-    align-items: center;
-    gap: calc(var(--spacing-unit) * 1.5);
-    padding: calc(var(--spacing-unit) * 1.5);
-    margin-bottom: var(--spacing-unit);
-    background: var(--button-background-color);
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.nearby-item:hover {
-    background-color: var(--button-hover-background-color);
+.nearby-list .output-line {
+    margin-bottom: calc(var(--spacing-unit) * 0.8);
 }
 
 .nearby-distance {
@@ -256,9 +262,10 @@ input[type="radio"]:checked + label {
     min-width: 60px;
 }
 
-.nearby-name {
-    font-weight: 500;
-    flex: 1;
+.no-results {
+    opacity: 0.7;
+    text-align: center;
+    padding: calc(var(--spacing-unit) * 2);
 }
 
 /* Конвертер координат */
@@ -313,8 +320,16 @@ input[type="radio"]:checked + label {
         gap: var(--spacing-unit);
     }
     
+    .info-container {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+    }
+    
     .map-links {
         align-self: flex-end;
+        width: 100%;
+        justify-content: flex-end;
     }
 }
 
@@ -330,8 +345,7 @@ input[type="radio"]:checked + label {
     }
 }
 
-.output-line,
-.nearby-item {
+.output-line {
     animation: slideIn 0.3s ease-out;
 }
 
