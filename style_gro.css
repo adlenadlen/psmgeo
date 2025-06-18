@@ -80,7 +80,7 @@ input[type="radio"]:checked + label {
     outline-offset: 2px;
 }
 
-/* Кнопка геолокации - контрастная */
+/* Кнопка геолокации - менее контрастная */
 .geolocate-button {
     width: 45px;
     height: 45px;
@@ -92,12 +92,27 @@ input[type="radio"]:checked + label {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    background-color: var(--text-color) !important;
-    color: var(--background-color) !important;
+    /* Используем полупрозрачный темный фон для меньшего контраста */
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    color: var(--text-color) !important;
+}
+
+/* Темная тема - инвертируем */
+@media (prefers-color-scheme: dark) {
+    .geolocate-button {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+        color: var(--text-color) !important;
+    }
 }
 
 .geolocate-button:hover {
-    opacity: 0.8;
+    background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .geolocate-button:hover {
+        background-color: rgba(255, 255, 255, 0.3) !important;
+    }
 }
 
 /* Контейнер данных */
@@ -162,7 +177,7 @@ input[type="radio"]:checked + label {
     flex-shrink: 0;
 }
 
-/* Кнопки карт - улучшенное выравнивание */
+/* Кнопки карт - менее контрастные */
 .map-link {
     width: 32px;
     height: 32px;
@@ -176,14 +191,28 @@ input[type="radio"]:checked + label {
     justify-content: center;
     text-align: center;
     line-height: 1;
-    background-color: var(--text-color) !important;
-    color: var(--background-color) !important;
+    /* Полупрозрачный фон для меньшего контраста */
+    background-color: rgba(0, 0, 0, 0.15) !important;
+    color: var(--text-color) !important;
     text-decoration: none;
+}
+
+/* Темная тема */
+@media (prefers-color-scheme: dark) {
+    .map-link {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+    }
 }
 
 .map-link:hover {
     transform: scale(1.1);
-    opacity: 0.8;
+    background-color: rgba(0, 0, 0, 0.25) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .map-link:hover {
+        background-color: rgba(255, 255, 255, 0.25) !important;
+    }
 }
 
 /* Кнопки в секции данных */
@@ -194,12 +223,7 @@ input[type="radio"]:checked + label {
 }
 
 .action-buttons .b {
-    background-color: var(--text-color);
-    color: var(--background-color);
-}
-
-.action-buttons .b:hover {
-    opacity: 0.8;
+    /* Оставляем стандартный стиль кнопок */
 }
 
 /* Попап */
@@ -256,8 +280,13 @@ input[type="radio"]:checked + label {
 }
 
 .popup-map-links .map-link {
+    /* В попапе кнопки могут быть с обычным фоном */
     background-color: var(--button-background-color) !important;
     color: var(--text-color) !important;
+}
+
+.popup-map-links .map-link:hover {
+    background-color: var(--button-hover-background-color) !important;
 }
 
 .popup-close-btn,
