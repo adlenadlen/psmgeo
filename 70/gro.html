@@ -322,20 +322,15 @@ function populateNearbyList(nearbyPointsArray) {
     if (nearbyPointsArray.length > 0) {
         nearbyPointsArray.forEach(item => {
             const rd = item.record.fields;
-            let outStr = `${rd['Point'] || 'N/A'}${currentSeparatorChar}${formatCoordinate(item.calculatedX)}${currentSeparatorChar}${formatCoordinate(item.calculatedY)}${currentSeparatorChar}${formatCoordinate(rd['H'])}`;
-            // Примечание не добавляем в этот список по умолчанию, чтобы не перегружать
-            // if (isNoteVisible) outStr += `${currentSeparatorChar}${rd['Info'] || 'N/A'}`;
-
-
             const li = document.createElement('div');
             li.className = 'nearby-item';
 
             const contentSpan = document.createElement('span');
-            // Отображаем название, X и Y точки
-            contentSpan.innerHTML = `<span class="nearby-distance">(${item.distance.toFixed(1)}м)</span> ${rd['Point'] || 'N/A'}${currentSeparatorChar}${formatCoordinate(item.calculatedX)}${currentSeparatorChar}${formatCoordinate(item.calculatedY)}`;
+            // Отображаем название, X и Y точки, а также добавляем высоту (H) и описание (Info)
+            contentSpan.innerHTML = `<span class="nearby-distance">(${item.distance.toFixed(1)}м)</span> ${rd['Point'] || 'N/A'}${currentSeparatorChar}${formatCoordinate(item.calculatedX)}${currentSeparatorChar}${formatCoordinate(item.calculatedY)}${currentSeparatorChar}${formatCoordinate(rd['H'] || 'N/A')}${currentSeparatorChar}${rd['Info'] || 'N/A'}`;
             li.appendChild(contentSpan);
 
-
+            // Остальной код для Google Maps и Yandex Maps остается без изменений
             if (typeof proj4 !== 'undefined') {
                 const pointMskCoords = getCoordsInTargetMode(rd, 'msk');
                 if (!isNaN(pointMskCoords.x) && !isNaN(pointMskCoords.y)) {
