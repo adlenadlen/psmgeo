@@ -1,4 +1,4 @@
-// app.js - Главный модуль приложения
+// app.js - Обновленный главный модуль
 import { CoordinateSystem } from './modules/coordinates.js';
 import { DataManager } from './modules/dataManager.js';
 import { UIController } from './modules/uiController.js';
@@ -17,7 +17,7 @@ class GROApp {
             fullDatabase: [],
             displayedRecords: [],
             currentCoordMode: 'izp',
-            isNoteVisible: true,
+            isNoteVisible: true, // Всегда true
             shouldIgnoreChars: false,
             searchMode: 'contains',
             separatorChar: ',',
@@ -72,8 +72,14 @@ class GROApp {
     }
     
     updateSettings(settings) {
+        // Примечания всегда видны
+        if (settings.isNoteVisible !== undefined) {
+            settings.isNoteVisible = true;
+        }
+        
         Object.assign(this.state, settings);
-        if (settings.currentCoordMode !== undefined || settings.separatorChar !== undefined || settings.isNoteVisible !== undefined) {
+        
+        if (settings.currentCoordMode !== undefined || settings.separatorChar !== undefined) {
             this.uiController.displayRecords(this.state.displayedRecords);
         }
     }
@@ -83,7 +89,7 @@ class GROApp {
             this.state.fullDatabase,
             referencePoint,
             this.state.currentCoordMode,
-            300 // максимальное расстояние
+            300
         );
         
         this.uiController.showNearbyPopup(nearbyPoints, referencePoint);
