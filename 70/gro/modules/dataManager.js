@@ -1,7 +1,15 @@
-// modules/dataManager.js - Модуль управления данными
+// modules/dataManager.js - Модуль управления данными с GitHub источником
 export class DataManager {
     constructor() {
-        this.csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTa3l-bUfZwy3iCNzVKmawZ_dApKSqMm6yuddAzP3eIkLp5m7zuHydF2UdSkUxKwW0CntEv6EBCxFf7/pub?gid=1125461087&single=true&output=csv';
+        // Используем raw.githubusercontent.com для прямого доступа к файлу
+        this.githubUrl = 'https://raw.githubusercontent.com/adlenadlen/psmgeo/main/70/gro/data/rp70.csv';
+        
+        // Альтернативные URL на случай проблем
+        this.fallbackUrls = [
+            'https://adlenadlen.github.io/psmgeo/70/gro/data/rp70.csv', // GitHub Pages
+            'https://docs.google.com/spreadsheets/d/e/2PACX-1vTa3l-bUfZwy3iCNzVKmawZ_dApKSqMm6yuddAzP3eIkLp5m7zuHydF2UdSkUxKwW0CntEv6EBCxFf7/pub?gid=1125461087&single=true&output=csv' // Google Sheets
+        ];
+        
         this.columnIndices = {
             CoordSystem: 0,
             Point: 1,
@@ -13,16 +21,46 @@ export class DataManager {
     }
     
     async fetchData() {
+        // Сначала пробуем основной GitHub URL
         try {
-            const response = await fetch(`${this.csvUrl}&_=${Date.now()}`);
+            console.log('Загрузка данных из GitHub...');
+            const response = await fetch(this.githubUrl, {
+                headers: {
+                    'Accept': 'text/csv'
+                }
+            });
+            
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
             }
             
             const csvText = await response.text();
+            console.log('Данные успешно загружены из GitHub');
             return this.parseCSV(csvText);
+            
         } catch (error) {
-            throw new Error(`Не удалось загрузить данные: ${error.message}`);
+            console.warn('Ошибка загрузки из основного источника:', error.message);
+            
+            // Пробуем альтернативные источники
+            for (let i = 0; i < this.fallbackUrls.length; i++) {
+                try {
+                    console.log(`Попытка загрузки из резервного источника ${i + 1}...`);
+                    const response = await fetch(this.fallbackUrls[i]);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
+                    const csvText = await response.text();
+                    console.log(`Данные успешно загружены из резервного источника ${i + 1}`);
+                    return this.parseCSV(csvText);
+                    
+                } catch (fallbackError) {
+                    console.warn(`Резервный источник ${i + 1} недоступен:`, fallbackError.message);
+                }
+            }
+            
+            throw new Error('Не удалось загрузить данные из всех источников');
         }
     }
     
@@ -30,26 +68,35 @@ export class DataManager {
         const lines = csvText.trim().split('\n');
         const records = [];
         
-        for (let i = 0; i < lines.length; i++) {
+        // Пропускаем заголовок, если он есть
+        const startIndex = lines[0].includes('CoordSystem') || lines[0].includes('IZP') ? 0 : 1;
+        
+        for (let i = startIndex; i < lines.length; i++) {
             const line = lines[i].trim();
             if (!line) continue;
             
             const parts = this.parseCSVLine(line);
-            if (parts.length >= 6) {
+            
+            // Проверяем, что у нас достаточно полей
+            if (parts.length >= 5) {
+                // Обрабатываем случай, когда Info может отсутствовать
+                const info = parts.length > 5 ? parts[5]?.trim() : '';
+                
                 records.push({
-                    id: `gs_${i + 1}`,
+                    id: `rp_${i + 1}`,
                     fields: {
-                        CoordSystem: parts[this.columnIndices.CoordSystem]?.trim().toUpperCase() || 'UNKNOWN',
-                        Point: parts[this.columnIndices.Point]?.trim() || '',
-                        Xraw: parseFloat(parts[this.columnIndices.Xraw]) || NaN,
-                        Yraw: parseFloat(parts[this.columnIndices.Yraw]) || NaN,
-                        H: parseFloat(parts[this.columnIndices.H]) || NaN,
-                        Info: parts[this.columnIndices.Info]?.trim() || ''
+                        CoordSystem: parts[0]?.trim().toUpperCase() || 'UNKNOWN',
+                        Point: parts[1]?.trim() || '',
+                        Xraw: parseFloat(parts[2]) || NaN,
+                        Yraw: parseFloat(parts[3]) || NaN,
+                        H: parseFloat(parts[4]) || NaN,
+                        Info: info
                     }
                 });
             }
         }
         
+        console.log(`Обработано записей: ${records.length}`);
         return records;
     }
     
@@ -73,5 +120,17 @@ export class DataManager {
         
         parts.push(current);
         return parts;
+    }
+    
+    // Метод для получения статистики по системам координат
+    getCoordinateSystemStats(records) {
+        const stats = {};
+        
+        records.forEach(record => {
+            const system = record.fields.CoordSystem;
+            stats[system] = (stats[system] || 0) + 1;
+        });
+        
+        return stats;
     }
 }
