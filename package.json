@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0",
+    "proj4": "^2.11.0"
+  }
+}
